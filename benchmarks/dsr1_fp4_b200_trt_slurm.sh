@@ -105,15 +105,21 @@ attention_dp_config:
 EOF
 fi
 
+if [[ "$DP_ATTENTION" == "true" ]]; then
+    MAX_BATCH_SIZE=$((CONC/TP))
+else
+    MAX_BATCH_SIZE=$CONC
+fi
+
+MAX_NUM_TOKENS=$(( (MAX_BATCH_SIZE+ISL+64+63)/64*64 ))
+
 set -x
-
-MAX_NUM_TOKENS=$(( ($CONC+$ISL+64+63)/64*64 ))
-
 # Launch TRT-LLM server
 mpirun -n 1 --oversubscribe --allow-run-as-root \
     trtllm-serve $MODEL --port=$PORT \
     --trust_remote_code \
     --backend=pytorch \
+    --max_batch_size=$MAX_BATCH_SIZE \
     --max_seq_len=$MAX_MODEL_LEN \
     --max_num_tokens=$MAX_NUM_TOKENS \
     --tp_size=$TP --ep_size=$EP_SIZE \

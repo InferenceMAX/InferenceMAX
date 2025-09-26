@@ -5,6 +5,7 @@ export PORT_OFFSET=0  # Doesn't matter when --exclusive
 
 MODEL_CODE="${EXP_NAME%%_*}"
 FRAMEWORK_SUFFIX=$([[ "$FRAMEWORK" == "trt" ]] && printf '_trt' || printf '')
+MTP_SUFFIX=$([[ "$MTP_MODE" == "on" ]] && printf '_mtp' || printf '')
 
 PARTITION="dgx-b200"
 SQUASH_FILE="/raid/squash/$(echo "$IMAGE" | sed 's/[\/:@#]/_/g').sqsh"
@@ -20,6 +21,6 @@ srun --jobid=$JOB_ID \
 --container-mount-home \
 --container-workdir=/workspace/ \
 --no-container-entrypoint --export=ALL \
-bash benchmarks/${MODEL_CODE}_${PRECISION}_b200${FRAMEWORK_SUFFIX}_slurm.sh
+bash benchmarks/${MODEL_CODE}_${PRECISION}_b200${FRAMEWORK_SUFFIX}${MTP_SUFFIX}_slurm.sh
 
 scancel $JOB_ID

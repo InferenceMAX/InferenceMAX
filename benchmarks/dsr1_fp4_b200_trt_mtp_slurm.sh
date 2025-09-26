@@ -21,34 +21,77 @@ echo "TP: $TP, CONC: $CONC, ISL: $ISL, OSL: $OSL"
 hf download $MODEL
 
 # ========= Determine DP_ATTENTION, EP_SIZE and MOE_BACKEND based on ISL, OSL, CONC =========
-EP_SIZE="$TP"
-MOE_BACKEND="DEEPGEMM"
+EP_SIZE="1"
+MOE_BACKEND="TRTLLM"
 DP_ATTENTION=false
+MTP=3
 
-if [[ "$ISL" == "1024" && "$OSL" == "1024" ]]; then
-    if [[ $CONC -gt 32 ]]; then
-        DP_ATTENTION=true
+if [[ "$TP" == "4" ]]; then
+    if [[ "$ISL" == "1024" && "$OSL" == "1024" ]]; then
+        if [[ $CONC -ge 16 ]]; then
+            EP_SIZE="$TP"
+        fi
+        if [[ $CONC -ge 128 ]]; then
+            DP_ATTENTION=true
+            MOE_BACKEND="CUTLASS"
+            MTP=1
+        fi
+    elif [[ "$ISL" == "1024" && "$OSL" == "8192" ]]; then
+        if [[ $CONC -ge 32 ]]; then
+            EP_SIZE="$TP"
+        fi
+        if [[ $CONC -ge 128 ]]; then
+            DP_ATTENTION=true
+            MOE_BACKEND="CUTLASS"
+            MTP=1
+        fi
+    elif [[ "$ISL" == "8192" && "$OSL" == "1024" ]]; then
+        if [[ $CONC -ge 32 ]]; then
+            EP_SIZE="$TP"
+            DP_ATTENTION=true
+            MOE_BACKEND="CUTLASS"
+            MTP=1
+        fi
     fi
-elif [[ "$ISL" == "1024" && "$OSL" == "8192" ]]; then
-    if [[ $CONC -gt 64 ]]; then
-        DP_ATTENTION=true
-    fi
-elif [[ "$ISL" == "8192" && "$OSL" == "1024" ]]; then
-    if [[ $CONC -gt 64 ]]; then
-        DP_ATTENTION=true
+elif [[ "$TP" == "8" ]]; then
+    if [[ "$ISL" == "1024" && "$OSL" == "1024" ]]; then
+        if [[ $CONC -ge 16 ]]; then
+            EP_SIZE="$TP"
+        fi
+        if [[ $CONC -ge 64 ]]; then
+            DP_ATTENTION=true
+            MOE_BACKEND="CUTLASS"
+            MTP=1
+        fi
+    elif [[ "$ISL" == "1024" && "$OSL" == "8192" ]]; then
+        if [[ $CONC -ge 8 ]]; then
+            EP_SIZE="$TP"
+        fi
+        if [[ $CONC -ge 128 ]]; then
+            DP_ATTENTION=true
+            MOE_BACKEND="CUTLASS"
+            MTP=1
+        fi
+    elif [[ "$ISL" == "8192" && "$OSL" == "1024" ]]; then
+        if [[ $CONC -ge 32 ]]; then
+            EP_SIZE="$TP"
+            DP_ATTENTION=true
+            MOE_BACKEND="CUTLASS"
+            MTP=1
+        fi
     fi
 fi
 
-echo "Final configuration: EP_SIZE='$EP_SIZE', MOE_BACKEND='$MOE_BACKEND', DP_ATTENTION='$DP_ATTENTION'"
+echo "Final configuration: EP_SIZE='$EP_SIZE', MOE_BACKEND='$MOE_BACKEND', DP_ATTENTION='$DP_ATTENTION', MTP='$MTP'"
 
 SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
 PORT=$(( 8888 + $PORT_OFFSET ))
-EXTRA_CONFIG_FILE="dsr1-fp8.yml"
+EXTRA_CONFIG_FILE="dsr1-fp4.yml"
 
 cat > $EXTRA_CONFIG_FILE << EOF
 cuda_graph_config:
     enable_padding: true
-    max_batch_size: 256
+    max_batch_size: 512
 enable_attention_dp: $DP_ATTENTION
 print_iter_log: true
 kv_cache_config:
@@ -58,6 +101,9 @@ kv_cache_config:
 stream_interval: 10
 moe_config:
     backend: $MOE_BACKEND
+speculative_config:
+    decoding_type: MTP
+    num_nextn_predict_layers: ${MTP}
 EOF
 
 if [[ "$DP_ATTENTION" == "true" ]]; then
@@ -75,7 +121,7 @@ else
     MAX_BATCH_SIZE=$CONC
 fi
 
-MAX_NUM_TOKENS=$(( (MAX_BATCH_SIZE+ISL+64+63)/64*64 ))
+MAX_NUM_TOKENS=$(( ((MTP+1)*MAX_BATCH_SIZE+ISL+64+63)/64*64 ))
 
 set -x
 # Launch TRT-LLM server
@@ -116,4 +162,5 @@ python3 bench_serving/benchmark_serving.py \
 --request-rate inf --ignore-eos \
 --save-result --percentile-metrics 'ttft,tpot,itl,e2el' \
 --result-dir /workspace/ \
+--use-chat-template \
 --result-filename $RESULT_FILENAME.json

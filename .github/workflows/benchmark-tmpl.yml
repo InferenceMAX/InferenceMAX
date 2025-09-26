@@ -38,6 +38,9 @@ on:
       conc-list:
         type: string
         default: '[4, 8, 16, 32, 64]'
+      mtp-mode:
+        type: string
+        default: 'off'
 
 env:
   HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -51,6 +54,7 @@ env:
   IMAGE: ${{ inputs.image }}
   FRAMEWORK: ${{ inputs.framework }}
   PRECISION: ${{ inputs.precision }}
+  MTP_MODE: ${{ inputs.mtp-mode }}
 
 jobs:
   benchmark:

@@ -24,22 +24,26 @@ hf download $MODEL
 EP_SIZE="$TP"
 MOE_BACKEND="DEEPGEMM"
 DP_ATTENTION=false
+MTP=3
 
 if [[ "$ISL" == "1024" && "$OSL" == "1024" ]]; then
-    if [[ $CONC -gt 32 ]]; then
+    if [[ $CONC -ge 64 ]]; then
         DP_ATTENTION=true
+        MTP=1
     fi
 elif [[ "$ISL" == "1024" && "$OSL" == "8192" ]]; then
-    if [[ $CONC -gt 64 ]]; then
+    if [[ $CONC -ge 128 ]]; then
         DP_ATTENTION=true
+        MTP=1
     fi
 elif [[ "$ISL" == "8192" && "$OSL" == "1024" ]]; then
-    if [[ $CONC -gt 64 ]]; then
+    if [[ $CONC -ge 64 ]]; then
         DP_ATTENTION=true
+        MTP=1
     fi
 fi
 
-echo "Final configuration: EP_SIZE='$EP_SIZE', MOE_BACKEND='$MOE_BACKEND', DP_ATTENTION='$DP_ATTENTION'"
+echo "Final configuration: EP_SIZE='$EP_SIZE', MOE_BACKEND='$MOE_BACKEND', DP_ATTENTION='$DP_ATTENTION', MTP='$MTP'"
 
 SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
 PORT=$(( 8888 + $PORT_OFFSET ))
@@ -58,6 +62,9 @@ kv_cache_config:
 stream_interval: 10
 moe_config:
     backend: $MOE_BACKEND
+speculative_config:
+    decoding_type: MTP
+    num_nextn_predict_layers: ${MTP}
 EOF
 
 if [[ "$DP_ATTENTION" == "true" ]]; then
@@ -75,7 +82,7 @@ else
     MAX_BATCH_SIZE=$CONC
 fi
 
-MAX_NUM_TOKENS=$(( (MAX_BATCH_SIZE+ISL+64+63)/64*64 ))
+MAX_NUM_TOKENS=$(( ((MTP+1)*MAX_BATCH_SIZE+ISL+64+63)/64*64 ))
 
 set -x
 # Launch TRT-LLM server
@@ -116,4 +123,5 @@ python3 bench_serving/benchmark_serving.py \
 --request-rate inf --ignore-eos \
 --save-result --percentile-metrics 'ttft,tpot,itl,e2el' \
 --result-dir /workspace/ \
+--use-chat-template \
 --result-filename $RESULT_FILENAME.json
