@@ -124,7 +124,7 @@ jobs:
       osl: 1024
       max-model-len: 2048
       random-range-ratio: 0.8
-      tp-list: '[8]'
+      tp-list: '[2,4]'
       conc-list: '[64,128,265,512]'
 
   collect-test-results:
