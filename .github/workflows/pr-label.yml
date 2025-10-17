@@ -1,0 +1,412 @@
+name: PR Label CI
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+
+concurrency:
+  group: pr-benchmark-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  #######################################
+  #               H100                  #
+  #######################################
+  bmk-h100-llama:
+    if: contains(github.event.pull_request.labels.*.name, 'llama-h100')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: &h100_runners
+          - 'h100-cr_0'
+          - 'h100-cr_1'
+          - 'h100-cw_0'
+          - 'h100-cw_1'
+        config:
+          - { image: 'vllm/vllm-openai:v0.10.2', model: 'nvidia/Llama-3.3-70B-Instruct-FP8', framework: 'vllm', precision: 'fp8', exp-name: '70b_test' }
+    name: 'llama-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: &benchmark_tmpl_args
+      runner: ${{ matrix.runner }}
+      image: ${{ matrix.config.image }}
+      model: ${{ matrix.config.model }}
+      framework: ${{ matrix.config.framework }}
+      precision: ${{ matrix.config.precision }}
+      exp-name: ${{ matrix.config.exp-name }}
+      isl: 1024
+      osl: 1024
+      max-model-len: 2048
+      random-range-ratio: 0.8
+      tp-list: '[8]'
+      conc-list: '[1]'
+
+  bmk-h100-gptoss:
+    if: contains(github.event.pull_request.labels.*.name, 'gptoss-h100')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: *h100_runners
+        config:
+          - { image: 'vllm/vllm-openai:v0.10.2', model: 'openai/gpt-oss-120b', framework: 'vllm', precision: 'fp4', exp-name: 'gptoss_test' }
+    name: 'gptoss-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args
+
+  #######################################
+  #               H200                  #
+  #######################################
+  bmk-h200-llama:
+    if: contains(github.event.pull_request.labels.*.name, 'llama-h200')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: &h200_runners
+          - 'h200-cw_0'
+          - 'h200-cw_1'
+          - 'h200-nb_0'
+          - 'h200-nb_1'
+          - 'h200-nb_2'
+          - 'h200-nb_3'
+          - 'h200-nv_0'
+          - 'h200-nv_1'
+          - 'h200-nv_2'
+          - 'h200-nv_3'
+        config:
+          - { image: 'vllm/vllm-openai:v0.10.2', model: 'nvidia/Llama-3.3-70B-Instruct-FP8', framework: 'vllm', precision: 'fp8', exp-name: '70b_test' }
+    name: 'llama-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args
+
+  bmk-h200-dsr1:
+    if: contains(github.event.pull_request.labels.*.name, 'dsr1-h200')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: *h200_runners
+        config:
+          - { image: 'lmsysorg/sglang:v0.5.2rc2-cu126', model: 'deepseek-ai/DeepSeek-R1-0528', framework: 'sglang', precision: 'fp8', exp-name: 'dsr1_test' }
+    name: 'dsr1-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args
+
+  bmk-h200-gptoss:
+    if: contains(github.event.pull_request.labels.*.name, 'gptoss-h200')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: *h200_runners
+        config:
+          - { image: 'vllm/vllm-openai:v0.10.2', model: 'openai/gpt-oss-120b', framework: 'vllm', precision: 'fp4', exp-name: 'gptoss_test' }
+    name: 'gptoss-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args
+
+  bmk-h200-trt-llama:
+    if: contains(github.event.pull_request.labels.*.name, 'llama-h200-trt')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: *h200_runners
+        config:
+          - { image: 'nvcr.io#nvidia/tensorrt-llm/release:1.1.0rc2.post2', model: 'nvidia/Llama-3.3-70B-Instruct-FP8', framework: 'trt', precision: 'fp8', exp-name: '70b_test' }
+    name: 'llama-trt-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args
+
+  bmk-h200-trt-dsr1:
+    if: contains(github.event.pull_request.labels.*.name, 'dsr1-h200-trt')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: *h200_runners
+        config:
+          - { image: 'nvcr.io#nvidia/tensorrt-llm/release:1.1.0rc2.post2', model: 'deepseek-ai/DeepSeek-R1-0528', framework: 'trt', precision: 'fp8', exp-name: 'dsr1_test' }
+    name: 'dsr1-trt-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args
+
+  bmk-h200-trt-gptoss:
+    if: contains(github.event.pull_request.labels.*.name, 'gptoss-h200-trt')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: *h200_runners
+        config:
+          - { image: 'nvcr.io#nvidia/tensorrt-llm/release:1.1.0rc2.post2', model: 'openai/gpt-oss-120b', framework: 'trt', precision: 'fp4', exp-name: 'gptoss_test' }
+    name: 'gptoss-trt-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args
+
+  #######################################
+  #               B200                  #
+  #######################################
+  bmk-b200-llama:
+    if: contains(github.event.pull_request.labels.*.name, 'llama-b200')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: &b200_runners
+          - 'b200-nvd_0'
+          - 'b200-nvd_1'
+          - 'b200-nvd_2'
+        config:
+          - { image: 'vllm/vllm-openai:v0.10.2', model: 'nvidia/Llama-3.3-70B-Instruct-FP8', framework: 'vllm', precision: 'fp8', exp-name: '70b_test' }
+          - { image: 'vllm/vllm-openai:v0.10.2', model: 'nvidia/Llama-3.3-70B-Instruct-FP4', framework: 'vllm', precision: 'fp4', exp-name: '70b_test' }
+
+    name: 'llama-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: &benchmark_tmpl_args_b200
+      runner: ${{ matrix.runner }}
+      image: ${{ matrix.config.image }}
+      model: ${{ matrix.config.model }}
+      framework: ${{ matrix.config.framework }}
+      precision: ${{ matrix.config.precision }}
+      exp-name: ${{ matrix.config.exp-name }}
+      isl: 1024
+      osl: 1024
+      max-model-len: 2048
+      random-range-ratio: 0.8
+      tp-list: '[8]'
+      conc-list: '[4]'
+
+  bmk-b200-dsr1:
+    if: contains(github.event.pull_request.labels.*.name, 'dsr1-b200')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: *b200_runners
+        config:
+          - { image: 'lmsysorg/sglang:v0.5.3rc1-cu129-b200', model: 'deepseek-ai/DeepSeek-R1-0528', framework: 'sglang', precision: 'fp8', exp-name: 'dsr1_test' }
+          - { image: 'lmsysorg/sglang:v0.5.3rc1-cu129-b200', model: 'nvidia/DeepSeek-R1-0528-FP4', framework: 'sglang', precision: 'fp4', exp-name: 'dsr1_test' }
+
+    name: 'dsr1-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args_b200
+
+  bmk-b200-gptoss:
+    if: contains(github.event.pull_request.labels.*.name, 'gptoss-b200')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: *b200_runners
+        config:
+          - { image: 'vllm/vllm-openai:v0.10.2', model: 'openai/gpt-oss-120b', framework: 'vllm', precision: 'fp4', exp-name: 'gptoss_test' }
+
+    name: 'gptoss-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args_b200
+
+  bmk-b200-trt-llama:
+    if: contains(github.event.pull_request.labels.*.name, 'llama-b200-trt')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: &b200_trt_runners
+          - 'b200-nv_0'
+          - 'b200-nv_1'
+          - 'b200-nb_0'
+          - 'b200-nb_1'
+        config:
+          - { image: 'nvcr.io#nvidia/tensorrt-llm/release:1.1.0rc2.post2', model: 'nvidia/Llama-3.3-70B-Instruct-FP8', framework: 'trt', precision: 'fp8', exp-name: '70b_test' }
+          - { image: 'nvcr.io#nvidia/tensorrt-llm/release:1.1.0rc2.post2', model: 'nvidia/Llama-3.3-70B-Instruct-FP4', framework: 'trt', precision: 'fp4', exp-name: '70b_test' }
+
+    name: 'llama-trt-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: &benchmark_tmpl_args_b200_trt
+      runner: ${{ matrix.runner }}
+      image: ${{ matrix.config.image }}
+      model: ${{ matrix.config.model }}
+      framework: ${{ matrix.config.framework }}
+      precision: ${{ matrix.config.precision }}
+      exp-name: ${{ matrix.config.exp-name }}
+      isl: 1024
+      osl: 1024
+      max-model-len: 2048
+      random-range-ratio: 0.8
+      tp-list: '[8]'
+      conc-list: '[1]'
+
+  bmk-b200-trt-dsr1:
+    if: contains(github.event.pull_request.labels.*.name, 'dsr1-b200-trt')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: *b200_trt_runners
+        config:
+          - { image: 'nvcr.io#nvidia/tensorrt-llm/release:1.1.0rc2.post2', model: 'deepseek-ai/DeepSeek-R1-0528', framework: 'trt', precision: 'fp8', exp-name: 'dsr1_test' }
+          - { image: 'nvcr.io#nvidia/tensorrt-llm/release:1.1.0rc2.post2', model: 'nvidia/DeepSeek-R1-0528-FP4', framework: 'trt', precision: 'fp4', exp-name: 'dsr1_test' }
+
+    name: 'dsr1-trt-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args_b200_trt
+
+  bmk-b200-trt-gptoss:
+    if: contains(github.event.pull_request.labels.*.name, 'gptoss-b200-trt')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: *b200_trt_runners
+        config:
+          - { image: 'nvcr.io#nvidia/tensorrt-llm/release:1.1.0rc2.post2', model: 'openai/gpt-oss-120b', framework: 'trt', precision: 'fp4', exp-name: 'gptoss_test' }
+
+    name: 'gptoss-trt-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args_b200_trt
+
+  #######################################
+  #               MI300X                #
+  #######################################
+  bmk-mi300x-gptoss:
+    if: contains(github.event.pull_request.labels.*.name, 'gptoss-mi300x')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: &mi300x_runners
+          - 'mi300x-amd_0'
+          - 'mi300x-amd_1'
+          - 'mi300x-amd_2'
+          - 'mi300x-amd_3'
+          - 'mi300x-amd_4'
+          - 'mi300x-cr_0'
+          - 'mi300x-oci_0'
+        config:
+          - { image: 'rocm/7.0:rocm7.0_ubuntu_22.04_vllm_0.10.1_instinct_20250927_rc1', model: 'openai/gpt-oss-120b', framework: 'vllm', precision: 'fp4', exp-name: 'gptoss_test' }
+    name: 'gptoss-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args
+
+  bmk-mi300x-llama:
+    if: contains(github.event.pull_request.labels.*.name, 'llama-mi300x')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: *mi300x_runners
+        config:
+          - { image: 'rocm/7.0:rocm7.0_ubuntu_22.04_vllm_0.10.1_instinct_20250927_rc1', model: 'amd/Llama-3.3-70B-Instruct-FP8-KV', framework: 'vllm', precision: 'fp8', exp-name: '70b_test' }
+    name: 'llama-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args
+
+  bmk-mi300x-dsr1:
+    if: contains(github.event.pull_request.labels.*.name, 'dsr1-mi300x')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: *mi300x_runners
+        config:
+          - { image: 'rocm/7.0:rocm7.0_ubuntu_22.04_sgl-dev-v0.5.2-rocm7.0-mi30x-20250915', model: 'deepseek-ai/DeepSeek-R1-0528', framework: 'sglang', precision: 'fp8', exp-name: 'dsr1_test' }
+    name: 'dsr1-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args
+
+  #######################################
+  #               MI325X                #
+  #######################################
+  bmk-mi325x-llama:
+    if: contains(github.event.pull_request.labels.*.name, 'llama-mi325x')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: &mi325x_runners
+          - 'mi325x-amd_0'
+          - 'mi325x-tw_0'
+          - 'mi325x-tw_1'
+          - 'mi325x-tw_2'
+          - 'mi325x-tw_3'
+        config:
+          - { image: 'rocm/7.0:rocm7.0_ubuntu_22.04_vllm_0.10.1_instinct_20250927_rc1', model: 'amd/Llama-3.3-70B-Instruct-FP8-KV', framework: 'vllm', precision: 'fp8', exp-name: '70b_test' }
+    name: 'llama-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args
+
+  bmk-mi325x-gptoss:
+    if: contains(github.event.pull_request.labels.*.name, 'gptoss-mi325x')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: *mi325x_runners
+        config:
+          - { image: 'rocm/7.0:rocm7.0_ubuntu_22.04_vllm_0.10.1_instinct_20250927_rc1', model: 'openai/gpt-oss-120b', framework: 'vllm', precision: 'fp4', exp-name: 'gptoss_test' }
+    name: 'gptoss-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args
+
+  bmk-mi325x-dsr1:
+    if: contains(github.event.pull_request.labels.*.name, 'dsr1-mi325x')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: *mi325x_runners
+        config:
+          - { image: 'rocm/7.0:rocm7.0_ubuntu_22.04_sgl-dev-v0.5.2-rocm7.0-mi30x-20250915', model: 'deepseek-ai/DeepSeek-R1-0528', framework: 'sglang', precision: 'fp8', exp-name: 'dsr1_test' }
+    name: 'dsr1-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args
+
+  #######################################
+  #               MI355X                #
+  #######################################
+  bmk-mi355x-llama:
+    if: contains(github.event.pull_request.labels.*.name, 'llama-mi355x')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: &mi355x_runners
+          - 'mi355x-amd_0'
+          - 'mi355x-amd_1'
+          - 'mi355x-amd_2'
+          - 'mi355x-amd_3'
+        config:
+          - { image: 'rocm/7.0:rocm7.0_ubuntu_22.04_vllm_0.10.1_instinct_20250927_rc1', model: 'amd/Llama-3.3-70B-Instruct-FP8-KV', framework: 'vllm', precision: 'fp8', exp-name: '70b_test' }
+          - { image: 'rocm/7.0:rocm7.0_ubuntu_22.04_vllm_0.10.1_instinct_20250927_rc1', model: 'amd/Llama-3.3-70B-Instruct-MXFP4-Preview', framework: 'vllm', precision: 'fp4', exp-name: '70b_test' }
+    name: 'llama-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args
+
+  bmk-mi355x-gptoss:
+    if: contains(github.event.pull_request.labels.*.name, 'gptoss-mi355x')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: *mi355x_runners
+        config:
+          - { image: 'rocm/7.0:rocm7.0_ubuntu_22.04_vllm_0.10.1_instinct_20250927_rc1', model: 'openai/gpt-oss-120b', framework: 'vllm', precision: 'fp4', exp-name: 'gptoss_test' }
+    name: 'gptoss-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args
+
+  bmk-mi355x-dsr1:
+    if: contains(github.event.pull_request.labels.*.name, 'dsr1-mi355x')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: *mi355x_runners
+        config:
+          - { image: 'rocm/7.0:rocm7.0_ubuntu_22.04_sgl-dev-v0.5.2-rocm7.0-mi35x-20250915', model: 'deepseek-ai/DeepSeek-R1-0528', framework: 'sglang', precision: 'fp8', exp-name: 'dsr1_test' }
+          - { image: 'rocm/7.0:rocm7.0_ubuntu_22.04_sgl-dev-v0.5.2-rocm7.0-mi35x-20250915', model: 'amd/DeepSeek-R1-0528-MXFP4-Preview', framework: 'sglang', precision: 'fp4', exp-name: 'dsr1_test' }
+    name: 'dsr1-${{ matrix.runner }}'
+    uses: ./.github/workflows/benchmark-tmpl.yml
+    secrets: inherit
+    with: *benchmark_tmpl_args
