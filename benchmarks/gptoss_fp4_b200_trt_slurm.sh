@@ -42,7 +42,7 @@ echo "Final configuration: EP_SIZE='$EP_SIZE', MOE_BACKEND='$MOE_BACKEND', DP_AT
 
 EXTRA_CONFIG_FILE="gptoss-fp4.yml"
 export TRTLLM_ENABLE_PDL=1
-export NCCL_GRAPH_REGISTER=0
+#export NCCL_GRAPH_REGISTER=0
 
 cat > $EXTRA_CONFIG_FILE << EOF
 cuda_graph_config:
@@ -107,3 +107,4 @@ python3 bench_serving/benchmark_serving.py \
 --save-result --percentile-metrics 'ttft,tpot,itl,e2el' \
 --result-dir /workspace/ \
 --result-filename $RESULT_FILENAME.json
+
