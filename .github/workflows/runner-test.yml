@@ -121,11 +121,11 @@ jobs:
       framework: ${{ inputs.framework }}
       precision: ${{ inputs.precision }}
       exp-name: ${{ inputs.exp-name }}
-      isl: 1024
+      isl: 8192
       osl: 1024
-      max-model-len: 2048
+      max-model-len: 9216
       random-range-ratio: 0.8
-      tp-list: '[1,2,4]'
+      tp-list: '[1,2]'
       conc-list: '[64,32,16]'
 
   collect-test-results:
