@@ -33,8 +33,8 @@ jobs:
           - 'h100-cw_0'
           - 'h100-cw_1'
         config:
-          - { image: 'vllm/vllm-openai:v0.10.2', model: 'nvidia/Llama-3.3-70B-Instruct-FP8', framework: 'vllm', precision: 'fp8', exp-name: '70b_test' }
-          - { image: 'vllm/vllm-openai:v0.10.2', model: 'openai/gpt-oss-120b', framework: 'vllm', precision: 'fp4', exp-name: 'gptoss_test' }
+          - { image: 'vllm/vllm-openai:v0.11.0', model: 'nvidia/Llama-3.3-70B-Instruct-FP8', framework: 'vllm', precision: 'fp8', exp-name: '70b_test' }
+          - { image: 'vllm/vllm-openai:v0.11.0', model: 'openai/gpt-oss-120b', framework: 'vllm', precision: 'fp4', exp-name: 'gptoss_test' }
 
     name: '${{ matrix.runner }}'
     uses: ./.github/workflows/benchmark-tmpl.yml
@@ -70,9 +70,9 @@ jobs:
           - 'h200-nv_2'
           - 'h200-nv_3'
         config:
-          - { image: 'vllm/vllm-openai:v0.10.2', model: 'nvidia/Llama-3.3-70B-Instruct-FP8', framework: 'vllm', precision: 'fp8', exp-name: '70b_test' }
+          - { image: 'vllm/vllm-openai:v0.11.0', model: 'nvidia/Llama-3.3-70B-Instruct-FP8', framework: 'vllm', precision: 'fp8', exp-name: '70b_test' }
           - { image: 'lmsysorg/sglang:v0.5.2rc2-cu126', model: 'deepseek-ai/DeepSeek-R1-0528', framework: 'sglang', precision: 'fp8', exp-name: 'dsr1_test' }
-          - { image: 'vllm/vllm-openai:v0.10.2', model: 'openai/gpt-oss-120b', framework: 'vllm', precision: 'fp4', exp-name: 'gptoss_test' }
+          - { image: 'vllm/vllm-openai:v0.11.0', model: 'openai/gpt-oss-120b', framework: 'vllm', precision: 'fp4', exp-name: 'gptoss_test' }
 
     name: '${{ matrix.runner }}'
     uses: ./.github/workflows/benchmark-tmpl.yml
@@ -140,11 +140,11 @@ jobs:
           - 'b200-nvd_2'
           - 'b200-nvd_3'
         config:
-          - { image: 'vllm/vllm-openai:v0.10.2', model: 'nvidia/Llama-3.3-70B-Instruct-FP8', framework: 'vllm', precision: 'fp8', exp-name: '70b_test' }
-          - { image: 'vllm/vllm-openai:v0.10.2', model: 'nvidia/Llama-3.3-70B-Instruct-FP4', framework: 'vllm', precision: 'fp4', exp-name: '70b_test' }
+          - { image: 'vllm/vllm-openai:v0.11.0', model: 'nvidia/Llama-3.3-70B-Instruct-FP8', framework: 'vllm', precision: 'fp8', exp-name: '70b_test' }
+          - { image: 'vllm/vllm-openai:v0.11.0', model: 'nvidia/Llama-3.3-70B-Instruct-FP4', framework: 'vllm', precision: 'fp4', exp-name: '70b_test' }
           - { image: 'lmsysorg/sglang:v0.5.3rc1-cu129-b200', model: 'deepseek-ai/DeepSeek-R1-0528', framework: 'sglang', precision: 'fp8', exp-name: 'dsr1_test' }
           - { image: 'lmsysorg/sglang:v0.5.3rc1-cu129-b200', model: 'nvidia/DeepSeek-R1-0528-FP4', framework: 'sglang', precision: 'fp4', exp-name: 'dsr1_test' }
-          - { image: 'vllm/vllm-openai:v0.10.2', model: 'openai/gpt-oss-120b', framework: 'vllm', precision: 'fp4', exp-name: 'gptoss_test' }
+          - { image: 'vllm/vllm-openai:v0.11.0', model: 'openai/gpt-oss-120b', framework: 'vllm', precision: 'fp4', exp-name: 'gptoss_test' }
 
     name: '${{ matrix.runner }}'
     uses: ./.github/workflows/benchmark-tmpl.yml
