@@ -1,0 +1,425 @@
+gptoss:
+  fp4:
+    h100:
+      1k1k:
+      - { tp: [ 2, 4, 8 ], conc: { start: 4, end: 64 } }
+      1k8k:
+      - { tp: [ 2, 4, 8 ], conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: [ 2, 4 ], conc: { start: 4, end: 64 } }
+      - { tp: [ 8 ], conc: { start: 4, end: 32 } }
+    h200:
+      1k1k:
+      - { tp: 1, conc: { start: 4, end: 64 } }
+      - { tp: 2, conc: { start: 4, end: 64 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 64 } }
+      1k8k:
+      - { tp: 1, conc: { start: 4, end: 16 } }
+      - { tp: 2, conc: { start: 4, end: 64 } }
+      - { tp: 4, conc: { start: 4, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: [ 1, 2, 4 ], conc: { start: 4, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 32 } }
+    h200-trt:
+      1k1k:
+      - { tp: 1, conc: { start: 4, end: 64 } }
+      - { tp: 2, conc: { start: 4, end: 64 } }
+      - { tp: 4, conc: { start: 4, end: 32 } }
+      - { tp: 8, conc: { start: 4, end: 8 } }
+      1k8k:
+      - { tp: 1, conc: { start: 32, end: 64 } }
+      - { tp: [ 2, 4, 8 ], conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: 1, conc: { start: 4, end: 64 } }
+      - { tp: [ 2, 4, 8 ], conc: { start: 4, end: 64 } }
+    b200:
+      1k1k:
+      - { tp: 1, conc: { start: 64, end: 64 } }
+      - { tp: [ 2, 4 ], conc: { start: 4, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 8 } }
+      1k8k:
+      - { tp: 1, conc: { start: 64, end: 64 } }
+      - { tp: [ 2, 4 ], conc: { start: 4, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 8 } }
+      8k1k:
+      - { tp: 1, conc: { start: 4, end: 64 } }
+      - { tp: [ 2, 4, 8 ], conc: { start: 4, end: 64 } }
+    b200-trt:
+      # NOTE: Regardless of TP, if CONC >= 256, DP_ATTENTION should be set
+      # to true and EP should be set to TP, i.e.,
+      # For lower concurrencies (CONC < 256), use TP Attention; Switch to 
+      # MoE Expert parallel for conurrency >=16 (1k1k and 1k8k)
+      1k1k:
+      - { tp: 1, conc: { start: 64, end: 64 } }
+      - { tp: 2, conc: { start: 4, end: 64 } }
+      # EP=4 iff TP=4 and CONC >= 16
+      - { tp: 4, conc: { start: 4, end: 8 } }
+      - { tp: 4, ep: 4, conc: { start: 16, end: 64 } }
+      # EP=8 iff TP=8 and CONC >= 16
+      - { tp: 8, conc: { start: 4, end: 8 } }
+      1k8k:
+      - { tp: 1, conc: { start: 64, end: 64 } }
+      - { tp: 2, conc: { start: 4, end: 64 } }
+      # EP=4 iff TP=4 and CONC >= 16
+      - { tp: 4, conc: { start: 4, end: 8 } }
+      - { tp: 4, ep: 4, conc: { start: 16, end: 64 } }
+      # EP=8 iff TP=8 and CONC >= 16
+      - { tp: 8, conc: { start: 4, end: 8 } }
+      8k1k:
+      - { tp: 1, conc: { start: 64, end: 64 } }
+      - { tp: [ 2, 4 ], conc: { start: 4, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 8 } }
+    mi300x:
+      1k1k:
+      - { tp: 1, conc: { start: 64, end: 64 } }
+      - { tp: [ 2, 4 ], conc: { start: 4, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 16 } }
+      1k8k:
+      - { tp: 1, conc: { start: 64, end: 64 } }
+      - { tp: [ 2, 4 ], conc: { start: 4, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 16 } }
+      8k1k:
+      - { tp: [ 1, 2, 4 ], conc: { start: 4, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 16 } }
+    mi325x:
+      1k1k:
+      - { tp: [ 1, 2, 4, 8 ], conc: { start: 4, end: 64 } }
+      1k8k:
+      - { tp: [ 1, 4 ], conc: { start: 64, end: 64 } }
+      - { tp: [ 2, 8 ], conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: 1, conc: { start: 4, end: 64 } }
+      - { tp: [ 2, 4 ], conc: { start: 4, end: 8 } }
+      - { tp: 8, conc: { start: 4, end: 16 } }
+    mi355x:
+      1k1k:
+      - { tp: 1, conc: { start: 4, end: 64 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 16 } }
+      1k8k:
+      - { tp: [ 1, 4, 8 ], conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: 1, conc: { start: 4, end: 64 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 16 } }
+
+llama:
+  fp4:
+    b200:
+      # fix: add TP=2,4 to B200, just as mi355 has
+      1k1k:
+      - { tp: 1, conc: { start: 64, end: 64 } }
+      - { tp: 2, conc: { start: 32, end: 64 } }
+      - { tp: 4, conc: { start: 4, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 16 } }
+      1k8k:
+      - { tp: 1, conc: { start: 64, end: 64 } }
+      - { tp: 2, conc: { start: 32, end: 64 } }
+      - { tp: 4, conc: { start: 4, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 32 } }
+      8k1k:
+      - { tp: 1, conc: { start: 16, end: 64 } }
+      - { tp: 2, conc: { start: 16, end: 64 } }
+      - { tp: 4, conc: { start: 4, end: 32 } }
+      - { tp: 8, conc: { start: 4, end: 8 } }
+    b200-trt:
+      # fix: add TP=2,4 to B200, just as mi355 has
+      # B200 can achieve TPS/User >= 30 with larger concurrency till 128
+      1k1k:
+      - { tp: 1, conc: { start: 128, end: 128 } }
+      - { tp: 2, conc: { start: 64, end: 128 } }
+      - { tp: 4, conc: { start: 4, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 16 } }
+      1k8k:
+      - { tp: 1, conc: { start: 128, end: 128 } }
+      - { tp: 2, conc: { start: 64, end: 128 } }
+      - { tp: 4, conc: { start: 4, end: 128 } }
+      - { tp: 8, conc: { start: 4, end: 32 } }
+      8k1k:
+      - { tp: 1, conc: { start: 32, end: 128 } }
+      - { tp: 2, conc: { start: 16, end: 128 } }
+      - { tp: 4, conc: { start: 4, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 16 } }
+    mi355x:
+      1k1k:
+      - { tp: 1, conc: { start: 32, end: 64 } }
+      - { tp: [ 2, 4 ], conc: { start: 4, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 16 } }
+      1k8k:
+      - { tp: 1, conc: { start: 32, end: 64 } }
+      - { tp: [ 2, 4 ], conc: { start: 4, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 16 } }
+      8k1k:
+      - { tp: 1, conc: { start: 32, end: 64 } }
+      - { tp: [ 2, 4 ], conc: { start: 4, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 16 } }
+  fp8:
+    h100:
+      1k1k:
+      - { tp: 2, conc: { start: 64, end: 64 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 64 } }
+      1k8k:
+      - { tp: 2, conc: { start: 64, end: 64 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: 2, conc: { start: 32, end: 64 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 64 } }
+    h200:
+      1k1k:
+      - { tp: 1, conc: { start: 64, end: 64 } }
+      - { tp: 2, conc: { start: 32, end: 64 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 64 } }
+      1k8k:
+      - { tp: [ 1, 2 ], conc: { start: 64, end: 64 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: [ 1, 2 ], conc: { start: 16, end: 64 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 64 } }
+    h200-trt:
+      # H200 can achieve TPS/User >= 30 with larger concurrency till 128
+      1k1k:
+      - { tp: 1, conc: { start: 128, end: 128 } }
+      - { tp: 2, conc: { start: 64, end: 128 } }
+      - { tp: 4, conc: { start: 4, end: 128 } }
+      - { tp: 8, conc: { start: 4, end: 32 } }
+      1k8k:
+      - { tp: 1, conc: { start: 128, end: 128 } }
+      - { tp: 2, conc: { start: 64, end: 128 } }
+      - { tp: 4, conc: { start: 4, end: 128 } }
+      - { tp: 8, conc: { start: 4, end: 32 } }
+      8k1k:
+      - { tp: [ 1, 2 ], conc: { start: 16, end: 128 } }
+      - { tp: 4, conc: { start: 4, end: 128 } }
+      - { tp: 8, conc: { start: 4, end: 32 } }
+    b200:
+      # fix: add TP=2,4 to B200, just as mi355 has
+      1k1k:
+      - { tp: 1, conc: { start: 64, end: 64 } }
+      - { tp: 2, conc: { start: 32, end: 64 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 64 } }
+      1k8k:
+      - { tp: [ 1, 2 ], conc: { start: 64, end: 64 } }
+      - { tp: 4, conc: { start: 16, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: 1, conc: { start: 32, end: 64 } }
+      - { tp: 2, conc: { start: 16, end: 64 } }
+      - { tp: 4, conc: { start: 4, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 32 } }
+    b200-trt:
+      # fix: add TP=2,4 to B200, just as mi355 has
+      # B200 can achieve TPS/User >= 30 with larger concurrency till 256
+      1k1k:
+      - { tp: 1, conc: { start: 128, end: 128 } }
+      - { tp: 2, conc: { start: 64, end: 128 } }
+      - { tp: 4, conc: { start: 4, end: 128 } }
+      - { tp: 8, conc: { start: 4, end: 32 } }
+      1k8k:
+      - { tp: 1, conc: { start: 128, end: 128 } }
+      - { tp: 2, conc: { start: 64, end: 128 } }
+      - { tp: 4, conc: { start: 16, end: 128 } }
+      - { tp: 8, conc: { start: 4, end: 32 } }
+      8k1k:
+      - { tp: 1, conc: { start: 32, end: 128 } }
+      - { tp: 2, conc: { start: 16, end: 128 } }
+      - { tp: 4, conc: { start: 4, end: 128 } }
+      - { tp: 8, conc: { start: 4, end: 16 } }
+    mi300x:
+      1k1k:
+      - { tp: [ 1, 2 ], conc: { start: 32, end: 64 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 64 } }
+      1k8k:
+      - { tp: [ 1, 2 ], conc: { start: 64, end: 64 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: [ 1, 2 ], conc: { start: 32, end: 64 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 64 } }
+    mi325x:
+      1k1k:
+      - { tp: [ 1, 2, 4 ], conc: { start: 32, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 64 } }
+      1k8k:
+      - { tp: [ 1, 2 ], conc: { start: 32, end: 64 } }
+      - { tp: 4, conc: { start: 64, end: 64 } }
+      - { tp: 8, conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: 1, conc: { start: 16, end: 64 } }
+      - { tp: 2, conc: { start: 4, end: 32 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 64 } }
+    mi355x:
+      1k1k:
+      - { tp: [ 1, 2 ], conc: { start: 32, end: 64 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 64 } }
+      1k8k:
+      - { tp: [ 1, 2 ], conc: { start: 32, end: 64 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: [ 1, 2 ], conc: { start: 32, end: 64 } }
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 64 } }
+
+dsr1:
+  fp4:
+    b200:
+      1k1k:
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 128 } }
+      1k8k:
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 128 } }
+      8k1k:
+      - { tp: 4, conc: { start: 4, end: 128 } }
+      - { tp: 8, conc: { start: 4, end: 16 } }
+    b200-trt:
+      # Determine DP_ATTENTION, and EP_SIZE based on ISL, OSL, CONC
+      # For ISL/OSL = 1k/1k
+      1k1k:
+      # If TP=4,
+      #   EP_SIZE=4 iff CONC > 32
+      #   DP_ATTENTION=true iff CONC >= 256
+      - { tp: 4, conc: { start: 4, end: 32 } }
+      - { tp: 4, ep: 4, conc: { start: 64, end: 128 } }
+      - { tp: 4, ep: 4, dp_attention: "true", conc: { start: 256, end: 256 } }
+      # If TP=8,
+      #   EP_SIZE=8 iff CONC > 8
+      #   DP_ATTENTION=true iff CONC >= 256
+      - { tp: 8, conc: { start: 4, end: 8 } }
+      - { tp: 8, ep: 8, conc: { start: 16, end: 128 } }
+      - { tp: 8, ep: 8, dp_attention: "true", conc: { start: 256, end: 256 } }
+      # For ISL/OSL = 1k/8k
+      1k8k:
+      # If TP=4,
+      #   EP_SIZE=4 iff CONC > 32
+      #   DP_ATTENTION=true iff CONC >= 256
+      - { tp: 4, conc: { start: 4, end: 32 } }
+      - { tp: 4, ep: 4, conc: { start: 64, end: 128 } }
+      - { tp: 4, ep: 4, dp_attention: "true", conc: { start: 256, end: 256 } }
+      # If TP=8,
+      #   EP_SIZE=8 iff CONC > 16
+      #   DP_ATTENTION=true iff CONC >= 256
+      - { tp: 8, conc: { start: 4, end: 16 } }
+      - { tp: 8, ep: 8, conc: { start: 32, end: 128 } }
+      - { tp: 8, ep: 8, dp_attention: "true", conc: { start: 256, end: 256 } }
+      # For ISL/OSL = 8k/1k
+      8k1k:
+      # If TP=4,
+      #   EP_SIZE=4 and DP_ATTENTION=true iff CONC > 32
+      - { tp: 4, conc: { start: 4, end: 32 } }
+      - { tp: 4, ep: 4, dp_attention: "true", conc: { start: 64, end: 256 } }
+      # If TP=8,
+      #   EP_SIZE=8 and DP_ATTENTION=true iff CONC > 32
+      - { tp: 8, conc: { start: 4, end: 32 } }
+      - { tp: 8, ep: 8, dp_attention: "true", conc: { start: 64, end: 256 } }
+    gb200:
+      1k1k:
+      - { tp: 12, conc: { start: 4300, end: 4300 } }
+      - { tp: 24, conc: { start: 4300, end: 4300 } }
+      - { tp: 24, conc: { start: 2048, end: 2048 } }
+      - { tp: 20, conc: { start: 1075, end: 1075 } }
+      - { tp: 36, conc: { start: 1075, end: 1075 } }
+      - { tp: 36, conc: { start: 564, end: 564 } }
+      - { tp: 36, conc: { start: 4, end: 256 } }
+      8k1k:
+      - { tp: 28, conc: { start: 2150, end: 2150 } }
+      - { tp: 48, conc: { start: 2150, end: 2150 } }
+      - { tp: 40, conc: { start: 1075, end: 1075 } }
+      - { tp: 48, conc: { start: 538, end: 538 } }
+      - { tp: 48, conc: { start: 256, end: 256 } }
+      - { tp: 28, conc: { start: 102, end: 102 } }
+      - { tp: 28, conc: { start: 3, end: 48 } }
+    gb200-mtp:
+      1k1k:
+      - { tp: 12, conc: { start: 2252, end: 2252 } }
+      - { tp: 24, conc: { start: 2150, end: 2150 } }
+      - { tp: 20, conc: { start: 1075, end: 1075 } }
+      - { tp: 20, conc: { start: 512, end: 512 } }
+      - { tp: 36, conc: { start: 512, end: 512 } }
+      - { tp: 36, conc: { start: 144, end: 144 } }
+      - { tp: 36, conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: 32, conc: { start: 2150, end: 2150 } }
+      - { tp: 48, conc: { start: 1075, end: 1075 } }
+      - { tp: 64, conc: { start: 538, end: 538 } }
+      - { tp: 52, conc: { start: 269, end: 269 } }
+      - { tp: 52, conc: { start: 128, end: 128 } }
+      - { tp: 28, conc: { start: 54, end: 54 } }
+      - { tp: 28, conc: { start: 3, end: 24 } }
+    mi355x:
+      1k1k:
+      - { tp: [ 4, 8 ], conc: { start: 4, end: 64 } }
+      1k8k:
+      - { tp: 8, conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: 8, conc: { start: 4, end: 64 } }
+  fp8:
+    h200:
+      1k1k:
+      - { tp: 8, conc: { start: 4, end: 64 } }
+      1k8k:
+      - { tp: 8, conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: 8, conc: { start: 4, end: 64 } }
+    h200-trt:
+      # Determine DP_ATTENTION and EP_SIZE based on ISL, OSL, CONC
+      # If ISL/OSL = 1k/1k, DP_ATTENTION=true iff CONC > 64
+      1k1k:
+      - { tp: 8, ep: 8, conc: { start: 4, end: 64 } }
+      # If ISL/OSL = 1k/8k, DP_ATTENTION=true iff CONC > 64
+      1k8k:
+      - { tp: 8, ep: 8, conc: { start: 4, end: 64 } }
+      # If ISL/OSL = 8k/1k, DP_ATTENTION=true iff CONC > 32
+      8k1k:
+      - { tp: 8, ep: 8, conc: { start: 4, end: 32 } }
+      - { tp: 8, ep: 8, dp_attention: "true", conc: { start: 64, end: 64 } }
+    b200:
+      1k1k:
+      - { tp: 8, conc: { start: 4, end: 64 } }
+      1k8k:
+      - { tp: 8, conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: 8, conc: { start: 4, end: 64 } }
+    b200-trt:
+      # Determine DP_ATTENTION and EP_SIZE based on ISL, OSL, CONC
+      # If ISL/OSL = 1k/1k, DP_ATTENTION=true iff CONC > 32
+      1k1k:
+      - { tp: 8, ep: 8, conc: { start: 4, end: 32 } }
+      - { tp: 8, ep: 8, dp_attention: "true", conc: { start: 64, end: 64 } }
+      # If ISL/OSL = 1k/8k, DP_ATTENTION=true iff CONC > 64
+      1k8k:
+      - { tp: 8, ep: 8, conc: { start: 4, end: 64 } }
+      # If ISL/OSL = 8k/1k, DP_ATTENTION=true iff CONC > 64
+      8k1k:
+      - { tp: 8, ep: 8, conc: { start: 4, end: 64 } }
+    gb200:
+      1k1k:
+      - { tp: 72, conc: { start: 8192, end: 8192 } }
+      - { tp: 72, conc: { start: 6144, end: 6144 } }
+      - { tp: 72, conc: { start: 5632, end: 5632 } }
+      - { tp: 72, conc: { start: 5376, end: 5376 } }
+      - { tp: 72, conc: { start: 5120, end: 5120 } }
+      - { tp: 72, conc: { start: 4992, end: 4992 } }
+      - { tp: 72, conc: { start: 4864, end: 4864 } }
+      - { tp: 72, conc: { start: 4608, end: 4608 } }
+      - { tp: 72, conc: { start: 1024, end: 4096 } }
+      8k1k:
+      - { tp: 72, conc: { start: 128, end: 4096 } }
+      - { tp: 72, conc: { start: 576, end: 576 } }
+      - { tp: 72, conc: { start: 448, end: 448 } }
+      - { tp: 72, conc: { start: 384, end: 384 } }
+    mi300x:
+      1k1k:
+      - { tp: 8, conc: { start: 4, end: 64 } }
+      1k8k:
+      - { tp: 8, conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: 8, conc: { start: 4, end: 64 } }
+    mi325x:
+      1k1k:
+      - { tp: 8, conc: { start: 4, end: 64 } }
+      1k8k:
+      - { tp: 8, conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: 8, conc: { start: 4, end: 64 } }
+    mi355x:
+      1k1k:
+      - { tp: 8, conc: { start: 4, end: 64 } }
+      1k8k:
+      - { tp: 8, conc: { start: 4, end: 64 } }
+      8k1k:
+      - { tp: 8, conc: { start: 4, end: 64 } }

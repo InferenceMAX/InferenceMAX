@@ -54,7 +54,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[2, 4, 8]'
 
   bmk-h200-fp8:
     if: ${{ inputs.use_h200 }}
@@ -71,7 +70,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[1, 2, 4, 8]'
 
   bmk-h200-trt-fp8:
     if: ${{ inputs.use_h200 }}
@@ -88,8 +86,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[1, 2, 4, 8]'  
-      conc-list: '[4, 8, 16, 32, 64, 128]'  # H200 can achieve TPS/User >= 30 with larger concurrency till 128
 
   bmk-b200-fp8:
     if: ${{ inputs.use_b200 }}
@@ -106,7 +102,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[1, 2, 4, 8]' # fix: add TP=2,4 to B200, just as mi355 has
 
   bmk-b200-trt-fp8:
     if: ${{ inputs.use_b200 }}
@@ -123,8 +118,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[1, 2, 4, 8]' # fix: add TP=2,4 to B200, just as mi355 has
-      conc-list: '[4, 8, 16, 32, 64, 128]'  # B200 can achieve TPS/User >= 30 with larger concurrency till 256
 
   bmk-mi300x-fp8:
     if: ${{ inputs.use_mi300x }}
@@ -141,7 +134,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[1, 2, 4, 8]'
 
   bmk-mi325x-fp8:
     if: ${{ inputs.use_mi325x }}
@@ -158,7 +150,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[1, 2, 4, 8]'
 
   bmk-mi355x-fp8:
     if: ${{ inputs.use_mi355x }}
@@ -175,7 +166,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[1, 2, 4, 8]'
 
   bmk-b200-fp4:
     if: ${{ inputs.use_b200 }}
@@ -192,7 +182,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[1, 2, 4, 8]'  # fix: add TP=2,4 to B200, just as mi355 has
 
   bmk-b200-trt-fp4:
     if: ${{ inputs.use_b200 }}
@@ -209,8 +198,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[1, 2, 4, 8]' # fix: add TP=2,4 to B200, just as mi355 has
-      conc-list: '[4, 8, 16, 32, 64, 128]'  # B200 can achieve TPS/User >= 30 with larger concurrency till 128
 
   bmk-mi355x-fp4:
     if: ${{ inputs.use_mi355x }}
@@ -227,4 +214,3 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[1, 2, 4, 8]'

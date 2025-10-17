@@ -40,22 +40,21 @@ on:
         default: false
 
 jobs:
-  bmk-h200-fp8:
-    if: ${{ inputs.use_h200 }}
-    uses: ./.github/workflows/benchmark-tmpl.yml
-    secrets: inherit
-    with:
-      runner: h200
-      image: 'lmsysorg/sglang:v0.5.2rc2-cu126'
-      model: 'deepseek-ai/DeepSeek-R1-0528'
-      framework: 'sglang'
-      precision: 'fp8'
-      exp-name: ${{ inputs.exp-name }}
-      isl: ${{ inputs.isl }}
-      osl: ${{ inputs.osl }}
-      max-model-len: ${{ inputs.max-model-len }}
-      random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[8]'
+  # bmk-h200-fp8:
+  #   if: ${{ inputs.use_h200 }}
+  #   uses: ./.github/workflows/benchmark-tmpl.yml
+  #   secrets: inherit
+  #   with:
+  #     runner: h200
+  #     image: 'lmsysorg/sglang:v0.5.2rc2-cu126'
+  #     model: 'deepseek-ai/DeepSeek-R1-0528'
+  #     framework: 'sglang'
+  #     precision: 'fp8'
+  #     exp-name: ${{ inputs.exp-name }}
+  #     isl: ${{ inputs.isl }}
+  #     osl: ${{ inputs.osl }}
+  #     max-model-len: ${{ inputs.max-model-len }}
+  #     random-range-ratio: ${{ inputs.random-range-ratio }}
 
   bmk-h200-trt-fp8:
     if: ${{ inputs.use_h200 }}
@@ -72,7 +71,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[8]'
 
   bmk-b200-fp8:
     if: ${{ inputs.use_b200 }}
@@ -89,7 +87,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[8]'
 
   bmk-b200-trt-fp8:
     if: ${{ inputs.use_b200 }}
@@ -106,7 +103,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[8]'
 
   bmk-mi300x-fp8:
     if: ${{ inputs.use_mi300x }}
@@ -123,7 +119,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[8]'
 
   bmk-mi325x-fp8:
     if: ${{ inputs.use_mi325x }}
@@ -140,7 +135,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[8]'
 
   bmk-mi355x-fp8:
     if: ${{ inputs.use_mi355x }}
@@ -157,7 +151,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[8]'
 
   bmk-b200-fp4:
     if: ${{ inputs.use_b200 }}
@@ -174,8 +167,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[4,8]'
-      conc-list: '[4, 8, 16, 32, 64, 128]'  # Custom concurrency values for this job
 
   bmk-b200-trt-fp4:
     if: ${{ inputs.use_b200 }}
@@ -192,8 +183,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      tp-list: '[4, 8]'
-      conc-list: '[4, 8, 16, 32, 64, 128, 256]'  # DPA4EP4 is already 30 tok/s/user and DPA8EP8 is already 35tok/s/user. 512 conc would be too much so we skipping it
 
   bmk-mi355x-fp4:
     if: ${{ inputs.use_mi355x }}
@@ -210,8 +199,6 @@ jobs:
       osl: ${{ inputs.osl }}
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
-      # These tensor parallelism settings are not necessary as they cannot fall on the Pareto frontier with this particular container - we remove them to save CI time.
-      tp-list: ${{ inputs.isl == 1024 && inputs.osl == 1024 && '[4, 8]' || '[8]' }}
 
   bmk-gb200-fp4-multinode-mtp-off:
     if: ${{ inputs.use_gb200 && !(inputs.isl == '1024' && inputs.osl == '8192') }}
