@@ -50,7 +50,7 @@ jobs:
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
       runner: h100
-      image: 'vllm/vllm-openai:v0.10.2'
+      image: 'vllm/vllm-openai:v0.11.0'
       model: 'openai/gpt-oss-120b'
       tp-list: '[2, 4, 8]'
       framework: 'vllm'
@@ -67,7 +67,7 @@ jobs:
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
       runner: h200
-      image: 'vllm/vllm-openai:v0.10.2'
+      image: 'vllm/vllm-openai:v0.11.0'
       model: 'openai/gpt-oss-120b'
       tp-list: '[1, 2, 4, 8]'
       framework: 'vllm'
@@ -84,7 +84,7 @@ jobs:
       max-model-len: ${{ inputs.max-model-len }}
       random-range-ratio: ${{ inputs.random-range-ratio }}
       runner: b200
-      image: 'vllm/vllm-openai:v0.10.2'
+      image: 'vllm/vllm-openai:v0.11.0'
       model: 'openai/gpt-oss-120b'
       tp-list: '[1, 2, 4, 8]'
       framework: 'vllm'
