@@ -8,9 +8,17 @@ export SLURM_PARTITION="batch"
 export SLURM_ACCOUNT="benchmark"
 export SLURM_JOB_NAME="benchmark-dynamo.job"
 
+# For SGLang - we are working on updating the 8k1k configs 
+# For now we add conditionals to this script to use newer code for the 1k1k configs
+
 ### FRAMEWORK_DIFF_IF_STATEMENT #1 - difference in setting up envvars
 if [[ $FRAMEWORK == "dynamo-sglang" ]]; then
-    export IMAGE="/mnt/lustre01/artifacts/containers/dynamo-sglang.sqsh"
+    # Set IMAGE based on ISL/OSL
+    if [ "$ISL" = "1024" ] && [ "$OSL" = "1024" ]; then
+        export IMAGE="/mnt/lustre01/artifacts/containers/lmsysorg+sglang+v0.5.4.post3-cu129-arm64.sqsh"
+    else
+        export IMAGE="/mnt/lustre01/artifacts/containers/dynamo-sglang.sqsh"
+    fi
     export MODEL_PATH="/mnt/lustre01/models/deepseek-r1-0528"
     export CONFIG_DIR="/mnt/lustre01/artifacts/sglang-configs/1k1k"
 else
@@ -158,12 +166,21 @@ if [[ $FRAMEWORK == "dynamo-trtllm" ]]; then
 else # if statement at the top - search for "FRAMEWORK_DIFF_IF_STATEMENT #2"
     # Set up Dynamo repository path
     DYNAMO_PATH="/mnt/lustre01/users/sa-shared/benchmarks/dynamo"
-    SGL_SLURM_JOBS_PATH="$DYNAMO_PATH/components/backends/sglang/slurm_jobs"
+    if [ "$ISL" = "1024" ] && [ "$OSL" = "1024" ]; then
+        SGL_SLURM_JOBS_PATH="$DYNAMO_PATH/examples/backends/sglang/slurm_jobs"
+    else
+        SGL_SLURM_JOBS_PATH="$DYNAMO_PATH/components/backends/sglang/slurm_jobs"
+    fi
 
     # Always clone and setup Dynamo
     echo "Cloning Dynamo repository..."
     rm -rf "$DYNAMO_PATH"
-    git clone --branch update-wait-for-model https://github.com/Elnifio/dynamo.git $DYNAMO_PATH
+    if [ "$ISL" = "1024" ] && [ "$OSL" = "1024" ]; then
+        # TODO: before merge this will be a different branch off of main
+        git clone --branch ishan/iter https://github.com/ai-dynamo/dynamo.git $DYNAMO_PATH
+    else
+        git clone --branch update-wait-for-model https://github.com/Elnifio/dynamo.git $DYNAMO_PATH
+    fi
     cd "$DYNAMO_PATH"
 
     # Navigate to corresponding directory
@@ -179,8 +196,15 @@ else # if statement at the top - search for "FRAMEWORK_DIFF_IF_STATEMENT #2"
 
     # Launch jobs based on ISL/OSL
     if [ "$ISL" = "1024" ] && [ "$OSL" = "1024" ]; then
-        concurrency_list="1024x2048x4096x4608x4864x4992x5120x5376x5632x6144x8192"
-        bash ./submit_disagg.sh 6 3 12 1 8 $ISL $OSL $concurrency_list inf
+        top_to_middle_of_curve_concurrency_list="1024x2048x4096"
+        bottom_of_curve_concurrency_list="2x4x8x16x64x128x256x512"
+
+        # Top to middle of curve (2 prefill workers each at DEP8 and 1 decode worker at DEP32)
+        bash ./submit_disagg.sh 4 2 8 1 9 $ISL $OSL $top_to_middle_of_curve_concurrency_list inf
+
+        # Bottom of curve (1 prefill worker at DEP4 and 4 decode workers at DEP4)
+        bash ./submit_disagg.sh 1 1 4 4 9 $ISL $OSL $bottom_of_curve_concurrency_list inf 1p_4d
+
     elif [ "$ISL" = "8192" ] && [ "$OSL" = "1024" ]; then
         concurrency_list="128x256x384x448x512x576x1024x2048x4096"
         bash ./submit_disagg.sh 12 6 6 1 8 $ISL $OSL $concurrency_list inf
