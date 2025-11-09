@@ -1,13 +1,20 @@
-name: Test Matrix Logic
+name: Test Utils
 
 on:
   pull_request:
     paths:
-      - 'utils/matrix-logic/**'
+      - 'utils/**/*.py'
+      - '.github/workflows/test-utils.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'utils/**/*.py'
+      - '.github/workflows/test-utils.yml'
 
 jobs:
   test:
-    if: github.event.pull_request.draft != true
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -26,7 +33,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pydantic pyyaml
 
-      - name: Run pytest
+      - name: Run pytest for matrix-logic
         run: |
           cd utils/matrix-logic
           pytest test_generate_sweep_configs.py -v
+
+      - name: Run pytest for process_result
+        run: |
+          cd utils
+          pytest test_process_result.py -v
