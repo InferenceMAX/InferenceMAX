@@ -28,7 +28,7 @@ done < <(docker logs -f --tail=0 $server_name 2>&1)
 
 git clone https://github.com/kimbochen/bench_serving.git
 
-set -x
+set -ex
 docker run --rm --network host --name $client_name \
 -v $GITHUB_WORKSPACE:/workspace/ -w /workspace/ \
 -e HF_TOKEN -e PYTHONPYCACHEPREFIX=/tmp/pycache/ \
@@ -44,6 +44,7 @@ python3 bench_serving/benchmark_serving.py \
 --request-rate inf --ignore-eos \
 --save-result --percentile-metrics 'ttft,tpot,itl,e2el' \
 --result-dir /workspace/ --result-filename $RESULT_FILENAME.json"
+set +e
 
 while [ -n "$(docker ps -aq)" ]; do
     docker stop $server_name

@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+set -e
+
 sudo sh -c 'echo 0 > /proc/sys/kernel/numa_balancing'
 
 HF_HUB_CACHE_MOUNT="/shareddata/hf_hub_cache_$(hostname)/"
