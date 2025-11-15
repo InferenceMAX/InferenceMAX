@@ -44,7 +44,31 @@ export VLLM_FLASHINFER_ALLREDUCE_FUSION_THRESHOLDS_MB='{"2":32,"4":32,"8":8}'
 export PYTHONNOUSERSITE=1
 export VLLM_USE_FLASHINFER_MOE_MXFP4_MXFP8=1
 
+SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
+
 set -x
 vllm serve $MODEL --host 0.0.0.0 --port $PORT --config config.yaml \
 --gpu-memory-utilization 0.9 --tensor-parallel-size $TP --max-num-seqs 512 \
---disable-log-requests
+--disable-log-requests > $SERVER_LOG 2>&1 &
+
+SERVER_PID=$!
+
+# Source benchmark utilities
+source "$(dirname "$0")/benchmark_lib.sh"
+
+# Wait for server to be ready
+wait_for_server_ready --port "$PORT" --server-log "$SERVER_LOG" --server-pid "$SERVER_PID"
+
+pip install -q datasets pandas
+
+run_benchmark_serving \
+    --model "$MODEL" \
+    --port "$PORT" \
+    --backend vllm \
+    --input-len "$ISL" \
+    --output-len "$OSL" \
+    --random-range-ratio "$RANDOM_RANGE_RATIO" \
+    --num-prompts "$NUM_PROMPTS" \
+    --max-concurrency "$CONC" \
+    --result-filename "$RESULT_FILENAME" \
+    --result-dir /workspace/

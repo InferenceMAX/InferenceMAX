@@ -13,3 +13,5 @@ srun --partition=$PARTITION --gres=gpu:$TP --exclusive \
 --container-workdir=/workspace/ \
 --no-container-entrypoint --export=ALL,PORT_OFFSET=${USER: -1} \
 bash benchmarks/${EXP_NAME%%_*}_${PRECISION}_b200${FRAMEWORK_SUFFIX}_slurm.sh
+
+scancel $JOB_ID
