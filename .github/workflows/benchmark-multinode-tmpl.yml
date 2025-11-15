@@ -48,6 +48,7 @@ env:
   MAX_MODEL_LEN: ${{ inputs.max-model-len }}
   RANDOM_RANGE_RATIO: ${{ inputs.random-range-ratio }}
   MTP_MODE: ${{ inputs.mtp-mode }}
+  MODEL: ${{ inputs.model }}
 
 permissions:
   contents: read
@@ -97,9 +98,9 @@ jobs:
             if [ -f "$result_file" ]; then
               echo "Processing $result_file"
               # Extract GPU count, prefill_gpus and decode_gpus from filename for tp_size calculation
-              gpus=$(echo "$result_file" | sed -n "s/.*_gpus_\([0-9]*\).*\.json/\1/p")
-              prefill_gpus=$(echo "$result_file" | sed -n "s/.*_ctx_\([0-9]*\).*\.json/\1/p")
-              decode_gpus=$(echo "$result_file" | sed -n "s/.*_gen_\([0-9]*\).*\.json/\1/p")
+              gpus=$(echo "$result_file" | sed -n "s/.*_gpus-\([0-9]*\).*\.json/\1/p")
+              prefill_gpus=$(echo "$result_file" | sed -n "s/.*_ctx-\([0-9]*\).*\.json/\1/p")
+              decode_gpus=$(echo "$result_file" | sed -n "s/.*_gen-\([0-9]*\).*\.json/\1/p")
               
               if [ -n "$gpus" ]; then
                 echo "Extracted: gpus=$gpus, prefill_gpus=$prefill_gpus, decode_gpus=$decode_gpus"
