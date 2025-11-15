@@ -1,6 +1,7 @@
 import json
 import yaml
 import argparse
+import math
 from pydantic import BaseModel, Field, ValidationError, ConfigDict
 from typing import List
 
@@ -693,6 +694,20 @@ def load_config_files(config_files):
     return all_config_data
 
 
+def split_into_batches(matrix_values, max_batch_size):
+    """Split matrix_values into batches of at most max_batch_size entries.
+    
+    Returns a list of batches, where each batch is a list of matrix entries.
+    """
+    if max_batch_size <= 0:
+        raise ValueError("max_batch_size must be positive")
+    
+    batches = []
+    for i in range(0, len(matrix_values), max_batch_size):
+        batches.append(matrix_values[i:i + max_batch_size])
+    return batches
+
+
 def main():
     # Create parent parser with common arguments
     parent_parser = argparse.ArgumentParser(add_help=False)
@@ -701,6 +716,23 @@ def main():
         nargs='+',
         required=True,
         help='One or more configuration files (YAML format)'
+    )
+    parent_parser.add_argument(
+        '--max-batch-size',
+        type=int,
+        default=256,
+        help='Maximum number of configurations per batch (default: 256, GitHub Actions matrix limit)'
+    )
+    parent_parser.add_argument(
+        '--batch-index',
+        type=int,
+        required=False,
+        help='Return only the specified batch (0-indexed). If not specified, returns all configurations in a single batch.'
+    )
+    parent_parser.add_argument(
+        '--get-batch-count',
+        action='store_true',
+        help='Output only the number of batches needed (useful for generating dynamic job matrices)'
     )
 
     # Create main parser
@@ -957,11 +989,32 @@ def main():
     else:
         parser.error(f"Unknown command: {args.command}")
 
-    # Validate output before printing
+    # Validate output before batching
     validate_matrix_output(matrix_values)
 
-    print(json.dumps(matrix_values))
-    return matrix_values
+    # Calculate number of batches
+    total_batches = math.ceil(len(matrix_values) / args.max_batch_size)
+    
+    # If only batch count requested, output it and exit
+    if args.get_batch_count:
+        print(total_batches)
+        return total_batches
+
+    # Handle batching if requested
+    if args.batch_index is not None:
+        batches = split_into_batches(matrix_values, args.max_batch_size)
+        
+        if args.batch_index < 0 or args.batch_index >= len(batches):
+            parser.error(f"Invalid batch-index {args.batch_index}. Valid range is 0 to {len(batches) - 1}")
+        
+        # Return only the requested batch
+        output = batches[args.batch_index]
+    else:
+        # Return all configurations (default behavior)
+        output = matrix_values
+
+    print(json.dumps(output))
+    return output
 
 
 if __name__ == "__main__":

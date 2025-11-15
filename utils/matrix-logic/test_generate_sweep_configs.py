@@ -1,5 +1,6 @@
 import pytest
 import yaml
+import math
 from unittest.mock import patch
 from generate_sweep_configs import (
     validate_master_configs_structure,
@@ -13,6 +14,7 @@ from generate_sweep_configs import (
     load_config_files,
     main,
     MatrixEntry,
+    split_into_batches,
 )
 
 
@@ -1650,6 +1652,211 @@ def test_max_model_len_calculation(sample_master_config, temp_config_files):
     result = generate_full_sweep(Args(), sample_master_config)
     # isl=1024, osl=8192, so max-model-len should be 1024+8192+200=9416
     assert all(e['max-model-len'] == 9416 for e in result)
+
+
+# Tests for batching functionality
+def test_split_into_batches_basic():
+    """Test basic batch splitting."""
+    items = list(range(10))
+    batches = split_into_batches(items, 3)
+    assert len(batches) == 4
+    assert batches[0] == [0, 1, 2]
+    assert batches[1] == [3, 4, 5]
+    assert batches[2] == [6, 7, 8]
+    assert batches[3] == [9]
+
+
+def test_split_into_batches_exact_fit():
+    """Test batch splitting when items fit exactly."""
+    items = list(range(9))
+    batches = split_into_batches(items, 3)
+    assert len(batches) == 3
+    assert batches[0] == [0, 1, 2]
+    assert batches[1] == [3, 4, 5]
+    assert batches[2] == [6, 7, 8]
+
+
+def test_split_into_batches_smaller_than_batch_size():
+    """Test batch splitting when items are less than batch size."""
+    items = list(range(5))
+    batches = split_into_batches(items, 10)
+    assert len(batches) == 1
+    assert batches[0] == [0, 1, 2, 3, 4]
+
+
+def test_split_into_batches_empty_list():
+    """Test batch splitting with empty list."""
+    items = []
+    batches = split_into_batches(items, 10)
+    assert len(batches) == 0
+
+
+def test_split_into_batches_batch_size_one():
+    """Test batch splitting with batch size of 1."""
+    items = list(range(3))
+    batches = split_into_batches(items, 1)
+    assert len(batches) == 3
+    assert batches[0] == [0]
+    assert batches[1] == [1]
+    assert batches[2] == [2]
+
+
+def test_split_into_batches_invalid_batch_size():
+    """Test that invalid batch size raises error."""
+    items = list(range(10))
+    with pytest.raises(ValueError, match="max_batch_size must be positive"):
+        split_into_batches(items, 0)
+    with pytest.raises(ValueError, match="max_batch_size must be positive"):
+        split_into_batches(items, -1)
+
+
+def test_main_with_batch_index(temp_config_files):
+    """Test main with batch-index parameter."""
+    master_file, runner_file = temp_config_files
+    
+    # First get all results
+    with patch('sys.argv', ['script', 'full-sweep', 
+                           '--config-files', str(master_file),
+                           '--seq-lens', '1k1k']):
+        all_results = main()
+    
+    # Now test batching with batch size of 2
+    with patch('sys.argv', ['script', 'full-sweep', 
+                           '--config-files', str(master_file),
+                           '--seq-lens', '1k1k',
+                           '--max-batch-size', '2',
+                           '--batch-index', '0']):
+        batch_0 = main()
+    
+    assert len(batch_0) <= 2
+    # First batch should contain first items
+    assert batch_0[0] == all_results[0]
+    if len(all_results) > 1:
+        assert batch_0[1] == all_results[1]
+
+
+def test_main_with_get_batch_count(temp_config_files):
+    """Test main with get-batch-count parameter."""
+    master_file, runner_file = temp_config_files
+    
+    # First get total results
+    with patch('sys.argv', ['script', 'full-sweep', 
+                           '--config-files', str(master_file),
+                           '--seq-lens', '1k1k']):
+        all_results = main()
+    
+    # Now test getting batch count with batch size of 2
+    with patch('sys.argv', ['script', 'full-sweep', 
+                           '--config-files', str(master_file),
+                           '--seq-lens', '1k1k',
+                           '--max-batch-size', '2',
+                           '--get-batch-count']):
+        batch_count = main()
+    
+    expected_batches = math.ceil(len(all_results) / 2)
+    assert batch_count == expected_batches
+
+
+def test_main_with_batch_index_out_of_range(temp_config_files):
+    """Test that invalid batch index raises error."""
+    master_file, runner_file = temp_config_files
+    
+    with pytest.raises(SystemExit):
+        with patch('sys.argv', ['script', 'full-sweep', 
+                               '--config-files', str(master_file),
+                               '--seq-lens', '1k1k',
+                               '--max-batch-size', '10',
+                               '--batch-index', '999']):
+            main()
+
+
+def test_main_batch_covers_all_configs(temp_config_files):
+    """Test that batching covers all configurations."""
+    master_file, runner_file = temp_config_files
+    
+    # Get all results
+    with patch('sys.argv', ['script', 'full-sweep', 
+                           '--config-files', str(master_file),
+                           '--seq-lens', '1k1k']):
+        all_results = main()
+    
+    # Get results in batches of 2
+    batch_size = 2
+    num_batches = math.ceil(len(all_results) / batch_size)
+    
+    batched_results = []
+    for i in range(num_batches):
+        with patch('sys.argv', ['script', 'full-sweep', 
+                               '--config-files', str(master_file),
+                               '--seq-lens', '1k1k',
+                               '--max-batch-size', str(batch_size),
+                               '--batch-index', str(i)]):
+            batch = main()
+            batched_results.extend(batch)
+    
+    # Verify all configs are covered
+    assert len(batched_results) == len(all_results)
+    assert batched_results == all_results
+
+
+def test_batching_with_large_matrix(sample_master_config, temp_config_files, tmp_path):
+    """Test batching with a matrix larger than 256."""
+    master_file, runner_file = temp_config_files
+    
+    # Expand the master config to generate more than 256 entries
+    expanded_config = {}
+    for i in range(50):
+        key = f"model-{i}-fp8-vllm"
+        expanded_config[key] = {
+            "image": f"vllm/vllm-openai:v0.{i}",
+            "model": f"test-model-{i}",
+            "model-prefix": f"test{i}",
+            "precision": "fp8",
+            "framework": "vllm",
+            "runner": "h200",
+            "seq-len-configs": [
+                {
+                    "isl": 1024,
+                    "osl": 1024,
+                    "search-space": [
+                        {"tp": 4, "conc-start": 1, "conc-end": 128}  # Will generate many entries
+                    ]
+                }
+            ]
+        }
+    
+    # Write expanded config
+    expanded_file = tmp_path / "expanded.yaml"
+    with open(expanded_file, 'w') as f:
+        yaml.dump(expanded_config, f)
+    
+    # Generate all configs
+    with patch('sys.argv', ['script', 'full-sweep', 
+                           '--config-files', str(expanded_file),
+                           '--seq-lens', '1k1k']):
+        all_results = main()
+    
+    # Verify we have more than 256 entries
+    assert len(all_results) > 256
+    
+    # Get batch count
+    with patch('sys.argv', ['script', 'full-sweep', 
+                           '--config-files', str(expanded_file),
+                           '--seq-lens', '1k1k',
+                           '--get-batch-count']):
+        batch_count = main()
+    
+    # Should need multiple batches
+    assert batch_count >= 2
+    
+    # Verify each batch is within limit
+    for i in range(batch_count):
+        with patch('sys.argv', ['script', 'full-sweep', 
+                               '--config-files', str(expanded_file),
+                               '--seq-lens', '1k1k',
+                               '--batch-index', str(i)]):
+            batch = main()
+            assert len(batch) <= 256
 
 
 if __name__ == "__main__":
