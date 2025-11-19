@@ -1,0 +1,59 @@
+name: Eval - GSM8K on H100 (PoC)
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: "Serving image"
+        required: false
+        type: string
+        default: "vllm/vllm-openai:v0.11.0"
+      model:
+        description: "Model"
+        required: false
+        type: string
+        default: "openai/gpt-oss-120b"
+      tp:
+        description: "Tensor Parallel Size"
+        required: false
+        type: string
+        default: "4"
+      port:
+        description: "Server port"
+        required: false
+        type: string
+        default: "8888"
+      num_fewshot:
+        description: "Fewshot k for GSM8K"
+        required: false
+        type: string
+        default: "5"
+      limit:
+        description: "Sample limit for GSM8K"
+        required: false
+        type: string
+        default: "200"
+  push:
+    paths:
+      - '.github/workflows/eval-h100-gms8k.yml'
+      - '.github/workflows/eval-tmpl.yml'
+      - 'benchmarks/dsr1_fp8_mi325x_slurm.sh'
+
+jobs:
+  eval:
+    uses: ./.github/workflows/eval-tmpl.yml
+    secrets: inherit
+    with:
+      runner: mi325x-tw_1
+      image: ${{ inputs.image || 'rocm/7.0:rocm7.0_ubuntu_22.04_sgl-dev-v0.5.2-rocm7.0-mi30x-20250915' }}
+      model: ${{ inputs.model || 'deepseek-ai/DeepSeek-R1-0528' }}
+      framework: sglang
+      precision: fp8
+      exp-name: dsr1_gsm8k_poc
+      tp: ${{ inputs.tp || '4' }}
+      ep: '1'
+      dp-attn: false
+      port: ${{ inputs.port || '8888' }}
+      eval-task: gsm8k
+      num-fewshot: ${{ inputs.num_fewshot || '5' }}
+      limit: ${{ inputs.limit || '200' }}
