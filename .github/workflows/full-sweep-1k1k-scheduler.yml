@@ -1,4 +1,4 @@
-name: "Debug Test"
+name: "Full Sweep Scheduler - 1k1k"
 
 on:
     workflow_dispatch:
