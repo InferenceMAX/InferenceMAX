@@ -30,7 +30,7 @@ on:
       conc-list:
         required: true
         type: string
-      mtp-mode:
+      spec-decoding:
         required: true
         type: string
 
