@@ -27,16 +27,54 @@ on:
       osl:
         required: true
         type: string
+      conc:
+        required: true
+        type: string
+      mtp-mode:
+        required: true
+        type: string
+
       max-model-len:
         required: true
         type: string
       random-range-ratio:
         required: false
         type: string
-        default: '0.8'
-      mtp-mode:
+        default: "0.8"
+
+      prefill-num-worker:
         required: true
         type: string
+      prefill-tp:
+        required: true
+        type: string
+      prefill-ep:
+        required: true
+        type: string
+      prefill-dp-attn:
+        required: true
+        type: string
+      prefill-additional-settings:
+        required: false
+        type: string
+        default: "[]"
+
+      decode-num-worker:
+        required: true
+        type: string
+      decode-tp:
+        required: true
+        type: string
+      decode-ep:
+        required: true
+        type: string
+      decode-dp-attn:
+        required: true
+        type: string
+      decode-additional-settings:
+        required: false
+        type: string
+        default: "[]"
 
 env:
   EXP_NAME: ${{ inputs.exp-name }}
@@ -47,7 +85,18 @@ env:
   OSL: ${{ inputs.osl }}
   MAX_MODEL_LEN: ${{ inputs.max-model-len }}
   RANDOM_RANGE_RATIO: ${{ inputs.random-range-ratio }}
+  CONC: ${{ inputs.conc }}
   MTP_MODE: ${{ inputs.mtp-mode }}
+
+  PREFILL_NUM_WORKERS: ${{ inputs.prefill-num-worker }}
+  PREFILL_TP: ${{ inputs.prefill-tp }}
+  PREFILL_EP: ${{ inputs.prefill-ep }}
+  PREFILL_DP_ATTN: ${{ inputs.prefill-dp-attn }}
+
+  DECODE_NUM_WORKERS: ${{ inputs.decode-num-worker }}
+  DECODE_TP: ${{ inputs.decode-tp }}
+  DECODE_EP: ${{ inputs.decode-ep }}
+  DECODE_DP_ATTN: ${{ inputs.decode-dp-attn }}
 
 permissions:
   contents: read
@@ -56,7 +105,7 @@ jobs:
   benchmark:
     runs-on: ${{ inputs.runner }}
     timeout-minutes: 480
-    name: '${{ inputs.exp-name }} ${{ inputs.runner }} ${{ inputs.framework }} ${{ inputs.precision }} mtp-${{ inputs.mtp-mode }}'
+    name: "${{ inputs.exp-name }} ${{ inputs.runner }} ${{ inputs.framework }} ${{ inputs.precision }} mtp-${{ inputs.mtp-mode }}"
 
     steps:
       - name: Resource cleanup
@@ -78,7 +127,10 @@ jobs:
           RUNNER_NAME: ${{ runner.name }}
           RESULT_FILENAME: ${{ env.EXP_NAME }}_${{ env.PRECISION }}_${{ env.FRAMEWORK }}_mtp-${{ env.MTP_MODE }}_${{ runner.name }}
         run: |
-          bash ./runners/launch_${RUNNER_NAME%%_*}.sh
+          # bash ./runners/launch_${RUNNER_NAME%%_*}.sh
+          set -x
+          export ${{ join(fromJson(inputs.prefill-additional-settings), ' ') }} ${{ join(fromJson(inputs.prefill-additional-settings), ' ') }}
+          bash ./runners/launch_gb200-nv-copy.sh
           # Check if at least one result file was created
           if ls ${RESULT_FILENAME}_*.json 1> /dev/null 2>&1; then
             echo "RESULT_FILENAME=${RESULT_FILENAME}" >> $GITHUB_ENV

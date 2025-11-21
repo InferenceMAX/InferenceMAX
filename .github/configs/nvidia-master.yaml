@@ -351,19 +351,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: false
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=4608"
-        - "CTX_MAX_BATCH_SIZE=4"
+        - "PREFILL_MAX_NUM_TOKENS=4608"
+        - "PREFILL_MAX_BATCH_SIZE=4"
       decode:
         num-worker: 4
         tp: 8
         ep: 8
         dp-attn: false
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=128"
-        - "GEN_MAX_BATCH_SIZE=32"
-        - "GEN_GPU_MEM_FRACTION=0.9"
-        - "GEN_MTP_SIZE=3"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=128"
+        - "DECODE_MAX_BATCH_SIZE=32"
+        - "DECODE_GPU_MEM_FRACTION=0.9"
+        - "DECODE_MTP_SIZE=3"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     # dep - Run Data-Expert Parallel mode (attention_dp=true)
     - spec-decoding: "mtp"
@@ -374,19 +374,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: true
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=4608"
-        - "CTX_MAX_BATCH_SIZE=4"
+        - "PREFILL_MAX_NUM_TOKENS=4608"
+        - "PREFILL_MAX_BATCH_SIZE=4"
       decode:
         num-worker: 1
         tp: 16
         ep: 16
         dp-attn: true
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=256"
-        - "GEN_MAX_BATCH_SIZE=64"
-        - "GEN_GPU_MEM_FRACTION=0.7"
-        - "GEN_MTP_SIZE=3"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=256"
+        - "DECODE_MAX_BATCH_SIZE=64"
+        - "DECODE_GPU_MEM_FRACTION=0.7"
+        - "DECODE_MTP_SIZE=3"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     - spec-decoding: "mtp"
       conc-list: [ 2150 ]
@@ -396,19 +396,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: true
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=4608"
-        - "CTX_MAX_BATCH_SIZE=4"
+        - "PREFILL_MAX_NUM_TOKENS=4608"
+        - "PREFILL_MAX_BATCH_SIZE=4"
       decode:
         num-worker: 1
         tp: 16
         ep: 16
         dp-attn: true
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=256"
-        - "GEN_MAX_BATCH_SIZE=128"
-        - "GEN_GPU_MEM_FRACTION=0.7"
-        - "GEN_MTP_SIZE=1"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=256"
+        - "DECODE_MAX_BATCH_SIZE=128"
+        - "DECODE_GPU_MEM_FRACTION=0.7"
+        - "DECODE_MTP_SIZE=1"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     - spec-decoding: "mtp"
       conc-list: [ 512 ]
@@ -418,19 +418,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: true
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=4608"
-        - "CTX_MAX_BATCH_SIZE=4"
+        - "PREFILL_MAX_NUM_TOKENS=4608"
+        - "PREFILL_MAX_BATCH_SIZE=4"
       decode:
         num-worker: 1
         tp: 32
         ep: 32
         dp-attn: true
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=64"
-        - "GEN_MAX_BATCH_SIZE=16"
-        - "GEN_GPU_MEM_FRACTION=0.6"
-        - "GEN_MTP_SIZE=3"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=64"
+        - "DECODE_MAX_BATCH_SIZE=16"
+        - "DECODE_GPU_MEM_FRACTION=0.6"
+        - "DECODE_MTP_SIZE=3"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     - spec-decoding: "mtp"
       conc-list: [ 2252 ]
@@ -440,19 +440,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: true
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=4608"
-        - "CTX_MAX_BATCH_SIZE=4"
+        - "PREFILL_MAX_NUM_TOKENS=4608"
+        - "PREFILL_MAX_BATCH_SIZE=4"
       decode:
         num-worker: 1
         tp: 8
         ep: 8
         dp-attn: true
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=512"
-        - "GEN_MAX_BATCH_SIZE=256"
-        - "GEN_GPU_MEM_FRACTION=0.8"
-        - "GEN_MTP_SIZE=1"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=512"
+        - "DECODE_MAX_BATCH_SIZE=256"
+        - "DECODE_GPU_MEM_FRACTION=0.8"
+        - "DECODE_MTP_SIZE=1"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     # Non-MTP configurations (default spec_decoding="none")
     # tep - Run Tensor-Expert Parallel mode (attention_dp=false)
@@ -463,19 +463,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: false
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=4608"
-        - "CTX_MAX_BATCH_SIZE=4"
+        - "PREFILL_MAX_NUM_TOKENS=4608"
+        - "PREFILL_MAX_BATCH_SIZE=4"
       decode:
         num-worker: 4
         tp: 8
         ep: 8
         dp-attn: false
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=128"
-        - "GEN_MAX_BATCH_SIZE=128"
-        - "GEN_GPU_MEM_FRACTION=0.9"
-        - "GEN_MTP_SIZE=0"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=128"
+        - "DECODE_MAX_BATCH_SIZE=128"
+        - "DECODE_GPU_MEM_FRACTION=0.9"
+        - "DECODE_MTP_SIZE=0"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     # dep - Run Data-Expert Parallel mode (attention_dp=true)
     - conc-list: [ 1075 ]
@@ -485,19 +485,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: true
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=4608"
-        - "CTX_MAX_BATCH_SIZE=4"
+        - "PREFILL_MAX_NUM_TOKENS=4608"
+        - "PREFILL_MAX_BATCH_SIZE=4"
       decode:
         num-worker: 1
         tp: 32
         ep: 32
         dp-attn: true
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=32"
-        - "GEN_MAX_BATCH_SIZE=32"
-        - "GEN_GPU_MEM_FRACTION=0.7"
-        - "GEN_MTP_SIZE=0"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=32"
+        - "DECODE_MAX_BATCH_SIZE=32"
+        - "DECODE_GPU_MEM_FRACTION=0.7"
+        - "DECODE_MTP_SIZE=0"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     - conc-list: [ 1075 ]
       prefill:
@@ -506,19 +506,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: true
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=4608"
-        - "CTX_MAX_BATCH_SIZE=4"
+        - "PREFILL_MAX_NUM_TOKENS=4608"
+        - "PREFILL_MAX_BATCH_SIZE=4"
       decode:
         num-worker: 1
         tp: 16
         ep: 16
         dp-attn: true
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=64"
-        - "GEN_MAX_BATCH_SIZE=64"
-        - "GEN_GPU_MEM_FRACTION=0.75"
-        - "GEN_MTP_SIZE=0"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=64"
+        - "DECODE_MAX_BATCH_SIZE=64"
+        - "DECODE_GPU_MEM_FRACTION=0.75"
+        - "DECODE_MTP_SIZE=0"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     - conc-list: [ 2048, 4300 ]
       prefill:
@@ -527,19 +527,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: true
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=4608"
-        - "CTX_MAX_BATCH_SIZE=4"
+        - "PREFILL_MAX_NUM_TOKENS=4608"
+        - "PREFILL_MAX_BATCH_SIZE=4"
       decode:
         num-worker: 1
         tp: 16
         ep: 16
         dp-attn: true
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=256"
-        - "GEN_MAX_BATCH_SIZE=256"
-        - "GEN_GPU_MEM_FRACTION=0.75"
-        - "GEN_MTP_SIZE=0"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=256"
+        - "DECODE_MAX_BATCH_SIZE=256"
+        - "DECODE_GPU_MEM_FRACTION=0.75"
+        - "DECODE_MTP_SIZE=0"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     - conc-list: [ 4300 ]
       prefill:
@@ -548,19 +548,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: true
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=4608"
-        - "CTX_MAX_BATCH_SIZE=4"
+        - "PREFILL_MAX_NUM_TOKENS=4608"
+        - "PREFILL_MAX_BATCH_SIZE=4"
       decode:
         num-worker: 1
         tp: 8
         ep: 8
         dp-attn: true
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=512"
-        - "GEN_MAX_BATCH_SIZE=512"
-        - "GEN_GPU_MEM_FRACTION=0.8"
-        - "GEN_MTP_SIZE=0"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=512"
+        - "DECODE_MAX_BATCH_SIZE=512"
+        - "DECODE_GPU_MEM_FRACTION=0.8"
+        - "DECODE_MTP_SIZE=0"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
   - isl: 8192
     osl: 1024
@@ -576,19 +576,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: false
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=8448"
-        - "CTX_MAX_BATCH_SIZE=1"
+        - "PREFILL_MAX_NUM_TOKENS=8448"
+        - "PREFILL_MAX_BATCH_SIZE=1"
       decode:
         num-worker: 3
         tp: 8
         ep: 8
         dp-attn: false
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=64"
-        - "GEN_MAX_BATCH_SIZE=16"
-        - "GEN_GPU_MEM_FRACTION=0.9"
-        - "GEN_MTP_SIZE=3"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=64"
+        - "DECODE_MAX_BATCH_SIZE=16"
+        - "DECODE_GPU_MEM_FRACTION=0.9"
+        - "DECODE_MTP_SIZE=3"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     # dep - Run Data-Expert Parallel mode (attention_dp=true)
     - spec-decoding: "mtp"
@@ -599,19 +599,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: true
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=8448"
-        - "CTX_MAX_BATCH_SIZE=1"
+        - "PREFILL_MAX_NUM_TOKENS=8448"
+        - "PREFILL_MAX_BATCH_SIZE=1"
       decode:
         num-worker: 1
         tp: 32
         ep: 32
         dp-attn: true
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=32"
-        - "GEN_MAX_BATCH_SIZE=8"
-        - "GEN_GPU_MEM_FRACTION=0.7"
-        - "GEN_MTP_SIZE=3"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=32"
+        - "DECODE_MAX_BATCH_SIZE=8"
+        - "DECODE_GPU_MEM_FRACTION=0.7"
+        - "DECODE_MTP_SIZE=3"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     - spec-decoding: "mtp"
       conc-list: [ 538 ]
@@ -621,19 +621,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: true
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=8448"
-        - "CTX_MAX_BATCH_SIZE=1"
+        - "PREFILL_MAX_NUM_TOKENS=8448"
+        - "PREFILL_MAX_BATCH_SIZE=1"
       decode:
         num-worker: 1
         tp: 32
         ep: 32
         dp-attn: true
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=64"
-        - "GEN_MAX_BATCH_SIZE=16"
-        - "GEN_GPU_MEM_FRACTION=0.7"
-        - "GEN_MTP_SIZE=3"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=64"
+        - "DECODE_MAX_BATCH_SIZE=16"
+        - "DECODE_GPU_MEM_FRACTION=0.7"
+        - "DECODE_MTP_SIZE=3"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     - spec-decoding: "mtp"
       conc-list: [ 1075 ]
@@ -643,19 +643,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: true
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=8448"
-        - "CTX_MAX_BATCH_SIZE=1"
+        - "PREFILL_MAX_NUM_TOKENS=8448"
+        - "PREFILL_MAX_BATCH_SIZE=1"
       decode:
         num-worker: 1
         tp: 16
         ep: 16
         dp-attn: true
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=256"
-        - "GEN_MAX_BATCH_SIZE=64"
-        - "GEN_GPU_MEM_FRACTION=0.75"
-        - "GEN_MTP_SIZE=2"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=256"
+        - "DECODE_MAX_BATCH_SIZE=64"
+        - "DECODE_GPU_MEM_FRACTION=0.75"
+        - "DECODE_MTP_SIZE=2"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     - spec-decoding: "mtp"
       conc-list: [ 2150 ]
@@ -665,19 +665,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: true
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=8448"
-        - "CTX_MAX_BATCH_SIZE=1"
+        - "PREFILL_MAX_NUM_TOKENS=8448"
+        - "PREFILL_MAX_BATCH_SIZE=1"
       decode:
         num-worker: 1
         tp: 8
         ep: 8
         dp-attn: true
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=512"
-        - "GEN_MAX_BATCH_SIZE=256"
-        - "GEN_GPU_MEM_FRACTION=0.8"
-        - "GEN_MTP_SIZE=1"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=512"
+        - "DECODE_MAX_BATCH_SIZE=256"
+        - "DECODE_GPU_MEM_FRACTION=0.8"
+        - "DECODE_MTP_SIZE=1"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     # Non-MTP configurations (default spec_decoding="none")
     # tep - Run Tensor-Expert Parallel mode (attention_dp=false)
@@ -688,19 +688,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: false
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=8448"
-        - "CTX_MAX_BATCH_SIZE=1"
+        - "PREFILL_MAX_NUM_TOKENS=8448"
+        - "PREFILL_MAX_BATCH_SIZE=1"
       decode:
         num-worker: 3
         tp: 8
         ep: 8
         dp-attn: false
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=32"
-        - "GEN_MAX_BATCH_SIZE=32"
-        - "GEN_GPU_MEM_FRACTION=0.9"
-        - "GEN_MTP_SIZE=0"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=32"
+        - "DECODE_MAX_BATCH_SIZE=32"
+        - "DECODE_GPU_MEM_FRACTION=0.9"
+        - "DECODE_MTP_SIZE=0"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     # dep - Run Data-Expert Parallel mode (attention_dp=true)
     - conc-list: [ 256, 538 ]
@@ -710,19 +710,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: true
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=8448"
-        - "CTX_MAX_BATCH_SIZE=1"
+        - "PREFILL_MAX_NUM_TOKENS=8448"
+        - "PREFILL_MAX_BATCH_SIZE=1"
       decode:
         num-worker: 1
         tp: 32
         ep: 32
         dp-attn: true
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=16"
-        - "GEN_MAX_BATCH_SIZE=16"
-        - "GEN_GPU_MEM_FRACTION=0.7"
-        - "GEN_MTP_SIZE=0"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=16"
+        - "DECODE_MAX_BATCH_SIZE=16"
+        - "DECODE_GPU_MEM_FRACTION=0.7"
+        - "DECODE_MTP_SIZE=0"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     - conc-list: [ 1075 ]
       prefill:
@@ -731,19 +731,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: true
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=8448"
-        - "CTX_MAX_BATCH_SIZE=1"
+        - "PREFILL_MAX_NUM_TOKENS=8448"
+        - "PREFILL_MAX_BATCH_SIZE=1"
       decode:
         num-worker: 1
         tp: 16
         ep: 16
         dp-attn: true
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=64"
-        - "GEN_MAX_BATCH_SIZE=64"
-        - "GEN_GPU_MEM_FRACTION=0.75"
-        - "GEN_MTP_SIZE=0"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=64"
+        - "DECODE_MAX_BATCH_SIZE=64"
+        - "DECODE_GPU_MEM_FRACTION=0.75"
+        - "DECODE_MTP_SIZE=0"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     - conc-list: [ 2150 ]
       prefill:
@@ -752,19 +752,19 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: true
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=8448"
-        - "CTX_MAX_BATCH_SIZE=1"
+        - "PREFILL_MAX_NUM_TOKENS=8448"
+        - "PREFILL_MAX_BATCH_SIZE=1"
       decode:
         num-worker: 1
         tp: 16
         ep: 16
         dp-attn: true
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=128"
-        - "GEN_MAX_BATCH_SIZE=128"
-        - "GEN_GPU_MEM_FRACTION=0.75"
-        - "GEN_MTP_SIZE=0"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=128"
+        - "DECODE_MAX_BATCH_SIZE=128"
+        - "DECODE_GPU_MEM_FRACTION=0.75"
+        - "DECODE_MTP_SIZE=0"
+        - "DECODE_EPLB_NUM_SLOTS=0"
 
     - conc-list: [ 2150 ]
       prefill:
@@ -773,16 +773,16 @@ dsr1-fp4-gb200-trt:
         ep: 4
         dp-attn: true
         additional-settings:
-        - "CTX_MAX_NUM_TOKENS=8448"
-        - "CTX_MAX_BATCH_SIZE=1"
+        - "PREFILL_MAX_NUM_TOKENS=8448"
+        - "PREFILL_MAX_BATCH_SIZE=1"
       decode:
         num-worker: 1
         tp: 8
         ep: 8
         dp-attn: true
         additional-settings:
-        - "GEN_MAX_NUM_TOKENS=256"
-        - "GEN_MAX_BATCH_SIZE=256"
-        - "GEN_GPU_MEM_FRACTION=0.8"
-        - "GEN_MTP_SIZE=0"
-        - "GEN_EPLB_NUM_SLOTS=0"
+        - "DECODE_MAX_NUM_TOKENS=256"
+        - "DECODE_MAX_BATCH_SIZE=256"
+        - "DECODE_GPU_MEM_FRACTION=0.8"
+        - "DECODE_MTP_SIZE=0"
+        - "DECODE_EPLB_NUM_SLOTS=0"
