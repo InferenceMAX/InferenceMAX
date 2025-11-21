@@ -111,9 +111,9 @@ if [[ $FRAMEWORK == "dynamo-trtllm" ]]; then
     echo "DECODE_DP_ATTN=$DECODE_DP_ATTN"
 
     echo "PREFILL_MAX_NUM_TOKENS=$PREFILL_MAX_NUM_TOKENS"
-    echo "PREFILL_BATCH_SIZE=$PREFILL_BATCH_SIZE"
+    echo "PREFILL_MAX_BATCH_SIZE=$PREFILL_MAX_BATCH_SIZE"
     echo "DECODE_MAX_NUM_TOKENS=$DECODE_MAX_NUM_TOKENS"
-    echo "DECODE_BATCH_SIZE=$DECODE_BATCH_SIZE"
+    echo "DECODE_MAX_BATCH_SIZE=$DECODE_MAX_BATCH_SIZE"
     echo "DECODE_GPU_MEM_FRACTION=$DECODE_GPU_MEM_FRACTION"
     echo "DECODE_MTP_SIZE=$DECODE_MTP_SIZE"
     echo "DECODE_EPLB_NUM_SLOTS=$DECODE_EPLB_NUM_SLOTS"
@@ -137,9 +137,9 @@ if [[ $FRAMEWORK == "dynamo-trtllm" ]]; then
             --segment=${total_nodes} ${additional_slurm_args} \
             benchmark_disagg.slurm \
             ${PREFILL_NUM_WORKERS} ${PREFILL_TP} \
-            ${PREFILL_BATCH_SIZE} ${PREFILL_MAX_NUM_TOKENS} \
+            ${PREFILL_MAX_BATCH_SIZE} ${PREFILL_MAX_NUM_TOKENS} \
             ${PREFILL_DP_ATTN} ${DECODE_NUM_WORKERS} \
-            ${DECODE_TP} ${DECODE_BATCH_SIZE} \
+            ${DECODE_TP} ${DECODE_MAX_BATCH_SIZE} \
             ${DECODE_MAX_NUM_TOKENS} ${DECODE_DP_ATTN} \
             ${DECODE_GPU_MEM_FRACTION} ${DECODE_EPLB_NUM_SLOTS} \
             ${DECODE_MTP_SIZE} ${CONC} \
