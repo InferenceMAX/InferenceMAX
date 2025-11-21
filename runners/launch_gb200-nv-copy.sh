@@ -29,9 +29,6 @@ fi
 export ISL="$ISL"
 export OSL="$OSL"
 
-job_output=
-job_id=
-
 ### FRAMEWORK_DIFF_IF_STATEMENT #2 - difference in launching jobs
 if [[ $FRAMEWORK == "dynamo-trtllm" ]]; then
 
