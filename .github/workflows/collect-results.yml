@@ -44,6 +44,7 @@ jobs:
         run: |
           pip install -q matplotlib
           python3 utils/plot_perf.py results/ ${{ inputs.exp-name || 'all' }}
+
       - name: Upload performance graphs
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
@@ -51,3 +52,12 @@ jobs:
           path: |
             tput_vs_intvty_*_${{ inputs.exp-name || 'all' }}.png
             tput_vs_e2el_*_${{ inputs.exp-name || 'all' }}.png
+
+      - name: Display graphs in summary
+        run: |
+          python3 utils/display_graphs.py \
+            ${{ inputs.exp-name || 'all' }} \
+            ${{ github.repository }} \
+            ${{ github.run_id }} \
+            graphs_${{ inputs.exp-name || 'all' }} \
+            >> $GITHUB_STEP_SUMMARY
