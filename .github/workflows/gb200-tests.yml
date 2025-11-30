@@ -10,6 +10,7 @@ on:
                 options:
                     - "nvcr.io/nvidia/ai-dynamo/sglang-runtime:0.5.1-rc0.pre1"
                     - "nvcr.io#nvidia/ai-dynamo/tensorrtllm-runtime:0.5.1-rc0.pre3"
+                    - "nvcr.io#nvidia/ai-dynamo/tensorrtllm-runtime:0.6.1-cuda13"
 
             model:
                 description: "Model"
@@ -18,6 +19,7 @@ on:
                 options:
                     - "deepseek-ai/DeepSeek-R1-0528"
                     - "deepseek-r1-fp4"
+                    - "openai/gpt-oss-120b"
 
             precision:
                 description: "Precision"
@@ -58,6 +60,7 @@ jobs:
         runs-on: ubuntu-latest
         outputs:
             max-model-len: ${{ steps.calc.outputs.max-model-len }}
+            model-prefix: ${{ steps.calc.outputs.model-prefix }}
         steps:
             - id: calc
               shell: python
@@ -70,8 +73,22 @@ jobs:
                   except ValueError:
                       print("Error: ISL and OSL must be integers")
                       sys.exit(1)
+                  
+                  # Map model names to clean prefixes
+                  model = "${{ inputs.model }}"
+                  if model == "deepseek-ai/DeepSeek-R1-0528":
+                      model_prefix = "dsr1"
+                  elif model == "deepseek-r1-fp4":
+                      model_prefix = "dsr1-fp4"
+                  elif model == "openai/gpt-oss-120b":
+                      model_prefix = "gptoss"
+                  else:
+                      # Fallback: replace slashes with underscores
+                      model_prefix = model.replace("/", "_")
+                  
                   with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                       f.write(f"max-model-len={isl + osl}\n")
+                      f.write(f"model-prefix={model_prefix}\n")
 
     benchmark-gb200:
         needs: pre-run
@@ -84,7 +101,7 @@ jobs:
             model: ${{ inputs.model }}
             framework: ${{ inputs.framework }}
             precision: ${{ inputs.precision }}
-            exp-name: dsr1_1k1k
+            exp-name: ${{ needs.pre-run.outputs.model-prefix }}
             isl: ${{ inputs.isl }}
             osl: ${{ inputs.osl }}
             max-model-len: ${{ needs.pre-run.outputs.max-model-len }}
