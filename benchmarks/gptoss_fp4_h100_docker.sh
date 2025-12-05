@@ -11,6 +11,8 @@
 # RESULT_FILENAME
 
 
+
+# Create a basic vLLM config
 cat > config.yaml << EOF
 compilation-config: '{"cudagraph_mode":"PIECEWISE"}'
 async-scheduling: true
@@ -22,6 +24,7 @@ EOF
 
 export PYTHONNOUSERSITE=1
 SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
+MODEL_NAME=${MODEL##*/}
 
 set -x
 vllm serve $MODEL --host=0.0.0.0 --port=$PORT \
@@ -29,7 +32,8 @@ vllm serve $MODEL --host=0.0.0.0 --port=$PORT \
 --gpu-memory-utilization=0.9 \
 --tensor-parallel-size=$TP \
 --max-num-seqs=$CONC  \
---disable-log-requests > $SERVER_LOG 2>&1 &
+--disable-log-requests \
+--served-model-name $MODEL_NAME > $SERVER_LOG 2>&1 &
 
 SERVER_PID=$!
 
@@ -42,7 +46,8 @@ wait_for_server_ready --port "$PORT" --server-log "$SERVER_LOG" --server-pid "$S
 pip install -q datasets pandas
 
 run_benchmark_serving \
-    --model "$MODEL" \
+    --model "$MODEL_NAME" \
+    --tokenizer "$MODEL" \
     --port "$PORT" \
     --backend vllm \
     --input-len "$ISL" \
@@ -52,3 +57,10 @@ run_benchmark_serving \
     --max-concurrency 512 \
     --result-filename "$RESULT_FILENAME" \
     --result-dir /workspace/
+
+# After throughput, run evaluation only if RUN_EVAL is true
+if [ "${RUN_EVAL}" = "true" ]; then
+    run_eval --framework lm-eval --port "$PORT" --concurrent-requests $(( $CONC * 2 ))
+    append_lm_eval_summary
+fi
+set +x

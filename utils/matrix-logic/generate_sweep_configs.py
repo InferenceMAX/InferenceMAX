@@ -31,6 +31,9 @@ FIELD_CONC = 'conc'
 FIELD_MAX_MODEL_LEN = 'max-model-len'
 FIELD_EXP_NAME = 'exp-name'
 
+# Eval
+FIELD_RUN_EVAL = 'run-eval'
+
 seq_len_stoi = {
     "1k1k": (1024, 1024),
     "1k8k": (1024, 8192),
@@ -67,6 +70,7 @@ class MatrixEntry(BaseModel):
     conc: int
     max_model_len: int = Field(alias='max-model-len')
     exp_name: str = Field(alias='exp-name')
+    run_eval: bool = Field(alias='run-eval', default=False)
 
 
 def validate_matrix_output(matrix_values: List[dict]) -> List[dict]:
@@ -82,6 +86,61 @@ def validate_matrix_output(matrix_values: List[dict]) -> List[dict]:
             raise ValueError(f"Matrix entry at index {i} failed validation:\n{e}")
     return matrix_values
 
+def mark_eval_entries(matrix_values: List[dict]) -> List[dict]:
+    """Mark entries that should run evaluation.
+    
+    For each unique (model, runner, framework, precision, isl, osl) combination:
+    - Mark highest TP with highest conc
+    - Mark lowest TP with highest conc
+    """
+    from collections import defaultdict
+    
+    # Group entries by (model, runner, framework, precision, isl, osl)
+    # This ensures we compare within the same configuration, not across different frameworks
+    groups = defaultdict(list)
+    for i, entry in enumerate(matrix_values):
+        key = (
+            entry[FIELD_MODEL], 
+            entry[FIELD_RUNNER], 
+            entry[FIELD_FRAMEWORK],
+            entry[FIELD_PRECISION],
+            entry[FIELD_ISL], 
+            entry[FIELD_OSL]
+        )
+        groups[key].append((i, entry))
+    
+    # For each group, find highest TP/highest conc and lowest TP/highest conc
+    eval_indices = set()
+    for key, entries in groups.items():
+        if not entries:
+            continue
+        
+        # Find min and max TP values
+        min_tp = min(e[FIELD_TP] for _, e in entries)
+        max_tp = max(e[FIELD_TP] for _, e in entries)
+        
+        # Find highest conc for highest TP
+        highest_tp_entries = [(i, e) for i, e in entries if e[FIELD_TP] == max_tp]
+        if highest_tp_entries:
+            max_conc_highest_tp = max(e[FIELD_CONC] for _, e in highest_tp_entries)
+            for i, e in highest_tp_entries:
+                if e[FIELD_CONC] == max_conc_highest_tp:
+                    eval_indices.add(i)
+        
+        # Find highest conc for lowest TP (only if different from max_tp)
+        if min_tp != max_tp:
+            lowest_tp_entries = [(i, e) for i, e in entries if e[FIELD_TP] == min_tp]
+            if lowest_tp_entries:
+                max_conc_lowest_tp = max(e[FIELD_CONC] for _, e in lowest_tp_entries)
+                for i, e in lowest_tp_entries:
+                    if e[FIELD_CONC] == max_conc_lowest_tp:
+                        eval_indices.add(i)
+    
+    # Mark the selected entries
+    for i, entry in enumerate(matrix_values):
+        entry[FIELD_RUN_EVAL] = i in eval_indices
+    
+    return matrix_values
 
 def validate_master_configs_structure(all_config_data):
     """Validate the structure of all master config entries.
@@ -702,6 +761,11 @@ def main():
         required=True,
         help='One or more configuration files (YAML format)'
     )
+    parent_parser.add_argument(
+        '--run-evals',
+        action='store_true',
+        help='Opt-in flag to mark a subset of generated configs to run evals. When omitted, no evals run.'
+    )
 
     # Create main parser
     parser = argparse.ArgumentParser(
@@ -956,6 +1020,10 @@ def main():
         matrix_values = generate_custom_test(args)
     else:
         parser.error(f"Unknown command: {args.command}")
+
+    # Choose eval (opt-in via --run-evals)
+    if args.run_evals:
+        matrix_values = mark_eval_entries(matrix_values)
 
     # Validate output before printing
     validate_matrix_output(matrix_values)
