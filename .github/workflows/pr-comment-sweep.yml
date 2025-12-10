@@ -1,0 +1,136 @@
+name: Slash Command Sweep
+run-name: "Validate PR #${{ github.event.issue.number }}"
+
+on:
+  # PR comment trigger
+  issue_comment:
+    types: [created]
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: PR number to checkout (refs/pull/<num>/head)
+        required: false
+        type: string
+      generator-args:
+        description: Args passed to generate_sweep_configs.py (omit /sweep)
+        required: false
+        type: string
+  # Push-based example/testing
+  push:
+    branches-ignore:
+      - main
+      - master
+
+concurrency:
+  group: "PR#${{ github.event.issue.number || github.ref_name }}"
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  get-jobs:
+    # Skip for PR comments that are not /sweep; run for all other triggers
+    if: ${{ github.event_name != 'issue_comment' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '/sweep')) }}
+    runs-on: ubuntu-latest
+    outputs:
+      pr-number: ${{ steps.parse.outputs.pr-number || steps.resolve.outputs.pr-number }}
+      generator-args: ${{ steps.parse.outputs.generator-args || steps.resolve.outputs.generator-args }}
+    steps:
+      - name: Parse PR comment (/sweep ...)
+        id: parse
+        if: ${{ github.event_name == 'issue_comment' && github.event.issue.pull_request && startsWith(github.event.comment.body, '/sweep') }}
+        shell: bash
+        env:
+          BODY: ${{ github.event.comment.body }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          # Require /sweep at the start of the line
+          cmd_line=$(printf "%s" "$BODY" | awk '/^\/sweep/{print; exit}')
+          if [[ -z "$cmd_line" ]]; then
+            echo "No /sweep command found at comment start" >&2
+            exit 1
+          fi
+          if [[ "$cmd_line" == "/sweep" ]]; then
+            cmd_args=""
+          else
+            cmd_args=${cmd_line#/sweep}
+          fi
+          cmd_args=$(echo "$cmd_args" | xargs || true)
+
+          echo "generator-args=$cmd_args" >> "$GITHUB_OUTPUT"
+          echo "pr-number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Find PR for this branch (if any)
+        id: find
+        if: ${{ github.event_name != 'issue_comment' }}
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const branch = context.ref.replace('refs/heads/', '');
+            const res = await github.rest.pulls.list({ owner, repo, state: 'open', head: `${owner}:${branch}` });
+            const num = res.data[0]?.number ? String(res.data[0].number) : '';
+            core.setOutput('pr-number', num);
+
+      - name: Prepare inputs (push/dispatch)
+        id: resolve
+        if: ${{ github.event_name != 'issue_comment' }}
+        shell: bash
+        env:
+          DISPATCH_PR: ${{ github.event.inputs.pr-number }}
+          DISPATCH_ARGS: ${{ github.event.inputs.generator-args }}
+        run: |
+          set -euo pipefail
+          pr_from_branch='${{ steps.find.outputs.pr-number }}'
+          pr_number="${DISPATCH_PR:-}"; if [[ -z "$pr_number" ]]; then pr_number="$pr_from_branch"; fi
+          gen_args="${DISPATCH_ARGS:-}"
+          if [[ -z "$gen_args" ]]; then
+            gen_args='full-sweep --single-node --runner-type h200 --model-prefix dsr1 --seq-lens 1k1k --max-conc 4'
+          fi
+          echo "Resolved PR: $pr_number";
+          echo "Using generator args: $gen_args";
+          echo "pr-number=$pr_number" >> "$GITHUB_OUTPUT"
+          echo "generator-args=$gen_args" >> "$GITHUB_OUTPUT"
+
+  approval:
+    needs: get-jobs
+    if: ${{ needs.get-jobs.outputs.generator-args != '' }}
+    runs-on: ubuntu-latest
+    name: approval
+    environment: bryan-test
+    steps:
+      - run: echo "approved"
+
+  validate:
+    needs: [get-jobs, approval]
+    if: ${{ needs.get-jobs.outputs.generator-args != '' }}
+    uses: ./.github/workflows/e2e-tests.yml
+    name: validate
+    secrets: inherit
+    with:
+      generate-cli-command: ${{ needs.get-jobs.outputs.generator-args }}
+      test-name: PR #${{ needs.get-jobs.outputs.pr-number }} sweep
+      ref: refs/pull/${{ needs.get-jobs.outputs.pr-number }}/head
+
+  validate-nonpr:
+    needs: get-jobs
+    if: ${{ github.event_name != 'issue_comment' && needs.get-jobs.outputs.generator-args != '' }}
+    uses: ./.github/workflows/e2e-tests.yml
+    name: validate (manual/push)
+    secrets: inherit
+    with:
+      generate-cli-command: ${{ needs.get-jobs.outputs.generator-args }}
+      test-name: Manual/Push sweep
+      ref: ${{ needs.get-jobs.outputs.pr-number && format('refs/pull/{0}/head', needs.get-jobs.outputs.pr-number) || '' }}
+
+  note-ignored:
+    # Inform when comment doesn't meet criteria (non-PR or not a /sweep)
+    if: ${{ github.event_name == 'issue_comment' && (!github.event.issue.pull_request || !startsWith(github.event.comment.body, '/sweep')) }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Comment ignored. Either not on a PR or not a /sweep command. For PR comments, runs require environment approval."
