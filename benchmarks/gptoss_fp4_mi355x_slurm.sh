@@ -23,6 +23,8 @@ export VLLM_USE_AITER_UNIFIED_ATTENTION=1
 export VLLM_ROCM_USE_AITER_MHA=0
 export VLLM_ROCM_USE_AITER_FUSED_MOE_A16W4=1
 
+#
+## Start up vllm server
 set -x
 vllm serve $MODEL --port $PORT \
 --tensor-parallel-size=$TP \
@@ -54,3 +56,10 @@ run_benchmark_serving \
     --max-concurrency "$CONC" \
     --result-filename "$RESULT_FILENAME" \
     --result-dir /workspace/
+
+# After throughput, run evaluation only if RUN_EVAL is true
+if [ "${RUN_EVAL}" = "true" ]; then
+    run_eval --framework lm-eval --port "$PORT" --concurrent-requests $(( $CONC * 2 ))
+    append_lm_eval_summary
+fi
+set +x

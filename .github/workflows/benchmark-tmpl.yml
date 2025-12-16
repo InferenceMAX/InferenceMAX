@@ -50,11 +50,13 @@ on:
       disagg:
         required: true
         type: string
+      run-eval:
+        type: boolean
+        required: true
       random-range-ratio:
         required: false
         type: string
         default: '0.8'
-
 env:
   HF_TOKEN: ${{ secrets.HF_TOKEN }}
   HF_HUB_CACHE: '/mnt/hf_hub_cache/'
@@ -74,6 +76,7 @@ env:
   CONC: ${{ inputs.conc }}
   SPEC_DECODING: ${{ inputs.spec-decoding }}
   DISAGG: ${{ inputs.disagg }}
+  RUN_EVAL: ${{ inputs.run-eval }}
 
 permissions:
   contents: read
@@ -82,7 +85,7 @@ jobs:
   benchmark:
     runs-on: ${{ inputs.runner }}
     timeout-minutes: 180
-    name: '${{ inputs.exp-name }} ${{ inputs.runner }} ${{ inputs.framework }} ${{ inputs.precision }} tp=${{ inputs.tp }} ep=${{ inputs.ep }} dpa=${{ inputs.dp-attn }} conc=${{ inputs.conc }}'
+    name: "${{ inputs.exp-name }} ${{ inputs.runner }} ${{ inputs.framework }} ${{ inputs.precision }} ${{ inputs.run-eval && 'eval ' || '' }}tp=${{ inputs.tp }} ep=${{ inputs.ep }} dpa=${{ inputs.dp-attn }} conc=${{ inputs.conc }}"
     steps:
       - name: Resource cleanup
         run: |
@@ -142,7 +145,11 @@ jobs:
       - name: Launch job script
         env:
           RUNNER_NAME: ${{ runner.name }}
+          RUNNER_TYPE: ${{ inputs.runner }}
           RESULT_FILENAME: ${{ env.EXP_NAME }}_${{ env.PRECISION }}_${{ env.FRAMEWORK }}_tp${{ env.TP }}_ep${{ env.EP_SIZE }}_dpa_${{ env.DP_ATTENTION }}_conc${{ env.CONC }}_${{ runner.name }}
+          # Suppress per-job eval markdown from being appended to the step summary.
+          # We'll publish a single combined eval table in the collection job instead.
+          GITHUB_STEP_SUMMARY: ''
         run: |
           bash ./runners/launch_${RUNNER_NAME%%_*}.sh
           FOUND_RESULT_FILE=
@@ -166,8 +173,26 @@ jobs:
           RUNNER_TYPE: ${{ inputs.runner }}
         run: |
           python3 utils/process_result.py
+
       - name: Upload result
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: bmk_${{ env.RESULT_FILENAME }}
           path: agg_${{ env.RESULT_FILENAME }}.json
+
+      - name: Upload eval results (if any)
+        if: ${{ env.RUN_EVAL == 'true' }}
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: eval_${{ env.EXP_NAME }}_${{ env.RESULT_FILENAME }}
+          path: |
+            meta_env.json
+            results*.json
+          if-no-files-found: ignore
+
+      - name: Cleanup eval outputs (post-upload)
+        if: ${{ env.RUN_EVAL == 'true' }}
+        run: |
+          rm -f meta_env.json || true
+          # Remove any eval results JSONs that were moved into workspace
+          rm -f results*.json || true
