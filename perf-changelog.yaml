@@ -110,3 +110,9 @@
   description:
     - "fix: Pruning unnecessary concurrencies "
   pr-link: https://github.com/InferenceMAX/InferenceMAX/pull/358
+
+- config-keys:
+    - dsr1-fp8-mi355x-sglang-disagg
+  description:
+    - "feat: Add PD disaggregation for Mi355X"
+  pr-link: https://github.com/InferenceMAX/InferenceMAX/pull/348
