@@ -1106,6 +1106,13 @@ def main(args: argparse.Namespace):
         # Merge with benchmark result
         result_json = {**result_json, **benchmark_result}
 
+        # Optionally exclude per-request data to reduce file size
+        if args.save_aggregated_only:
+            per_request_fields = ["input_lens", "output_lens", "ttfts", "itls",
+                                  "generated_texts", "errors"]
+            for field in per_request_fields:
+                result_json.pop(field, None)
+
         # Save to file
         base_model_id = model_id.split("/")[-1]
         max_concurrency_str = (f"-concurrency{args.max_concurrency}"
@@ -1254,6 +1261,13 @@ if __name__ == "__main__":
         "--save-result",
         action="store_true",
         help="Specify to save benchmark results to a json file",
+    )
+    parser.add_argument(
+        "--save-aggregated-only",
+        action="store_true",
+        help="When saving results, only include aggregated metrics and exclude "
+        "per-request data (input_lens, output_lens, ttfts, itls, generated_texts, "
+        "errors). This significantly reduces output file size for large benchmarks.",
     )
     parser.add_argument(
         "--metadata",
