@@ -27,4 +27,3 @@ if ls gpucore.* 1> /dev/null 2>&1; then
   echo "gpucore files exist. not good"
   rm -f gpucore.*
 fi
-
