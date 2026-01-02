@@ -10,20 +10,10 @@
 # MAX_MODEL_LEN
 # RANDOM_RANGE_RATIO
 # RESULT_FILENAME
-# NUM_PROMPTS
 
 echo "JOB $SLURM_JOB_ID running on $SLURMD_NODENAME"
 
 nvidia-smi
-
-# Calculate max-model-len based on ISL and OSL
-if [ "$ISL" = "1024" ] && [ "$OSL" = "1024" ]; then
-    CALCULATED_MAX_MODEL_LEN=$((ISL + OSL + 20))
-elif [ "$ISL" = "8192" ] || [ "$OSL" = "8192" ]; then
-    CALCULATED_MAX_MODEL_LEN=$((ISL + OSL + 200))
-else
-    CALCULATED_MAX_MODEL_LEN=${MAX_MODEL_LEN:-10240}  
-fi
 
 cat > config.yaml << EOF
 kv-cache-dtype: fp8
@@ -32,7 +22,7 @@ async-scheduling: true
 no-enable-prefix-caching: true
 max-cudagraph-capture-size: 2048
 max-num-batched-tokens: 8192
-max-model-len: $CALCULATED_MAX_MODEL_LEN
+max-model-len: $MAX_MODEL_LEN
 EOF
 
 export TORCH_CUDA_ARCH_LIST="10.0"
@@ -64,7 +54,7 @@ run_benchmark_serving \
     --input-len "$ISL" \
     --output-len "$OSL" \
     --random-range-ratio "$RANDOM_RANGE_RATIO" \
-    --num-prompts "$NUM_PROMPTS" \
+    --num-prompts $(( CONC * 10 )) \
     --max-concurrency "$CONC" \
     --result-filename "$RESULT_FILENAME" \
     --result-dir /workspace/
