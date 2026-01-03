@@ -6,18 +6,6 @@ export PORT_OFFSET=${USER: -1}
 PARTITION="compute"
 SQUASH_FILE="/squash/$(echo "$IMAGE" | sed 's/[\/:@#]/_/g').sqsh"
 
-if [[ "$MODEL" == "amd/DeepSeek-R1-0528-MXFP4-Preview" || "$MODEL" == "deepseek-ai/DeepSeek-R1-0528" ]]; then
-  if [[ "$OSL" == "8192" ]]; then
-    export NUM_PROMPTS=$(( CONC * 20 ))
-  else
-    export NUM_PROMPTS=$(( CONC * 50 ))
-  fi
-else
-  export NUM_PROMPTS=$(( CONC * 10 ))
-fi
-
-export ENROOT_RUNTIME_PATH=/tmp
-
 set -x
 salloc --partition=$PARTITION --gres=gpu:$TP --cpus-per-task=256 --time=180 --no-shell
 JOB_ID=$(squeue -u $USER -h -o %A | head -n1)
@@ -39,4 +27,3 @@ if ls gpucore.* 1> /dev/null 2>&1; then
   echo "gpucore files exist. not good"
   rm -f gpucore.*
 fi
-

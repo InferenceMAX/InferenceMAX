@@ -161,7 +161,7 @@ def generate_full_sweep(args, all_config_data, runner_data):
                         Fields.PREFILL.value: prefill,
                         Fields.DECODE.value: decode,
                         Fields.CONC.value: conc_values,  # Pass the entire list for multinode
-                        Fields.MAX_MODEL_LEN.value: isl + osl + 200,
+                        Fields.MAX_MODEL_LEN.value: int((isl + osl) * 1.5),
                         Fields.EXP_NAME.value: f"{model_code}_{seq_len_str}",
                         Fields.DISAGG.value: disagg,
                     }
@@ -218,7 +218,7 @@ def generate_full_sweep(args, all_config_data, runner_data):
                             Fields.OSL.value: osl,
                             Fields.TP.value: tp,
                             Fields.CONC.value: conc,
-                            Fields.MAX_MODEL_LEN.value: isl + osl + 200,
+                            Fields.MAX_MODEL_LEN.value: int((isl + osl) * 1.5),
                             Fields.EP.value: 1,  # Default
                             Fields.DP_ATTN.value: False,  # Default
                             Fields.SPEC_DECODING.value: spec_decoding,
@@ -288,6 +288,8 @@ def generate_runner_model_sweep_config(args, all_config_data, runner_data):
             if config[Fields.ISL.value] == 1024 and config[Fields.OSL.value] == 1024:
                 target_config = config
                 break
+            
+        isl = osl = 1024
 
         if target_config is None:
             continue
@@ -317,8 +319,8 @@ def generate_runner_model_sweep_config(args, all_config_data, runner_data):
                     Fields.PRECISION.value: val[Fields.PRECISION.value],
                     Fields.FRAMEWORK.value: val[Fields.FRAMEWORK.value],
                     Fields.RUNNER.value: node,
-                    Fields.ISL.value: 1024,
-                    Fields.OSL.value: 1024,
+                    Fields.ISL.value: isl,
+                    Fields.OSL.value: osl,
                     Fields.SPEC_DECODING.value: spec_decoding,
                     Fields.PREFILL.value: {
                         Fields.NUM_WORKER.value: prefill_config[Fields.NUM_WORKER.value],
@@ -335,7 +337,7 @@ def generate_runner_model_sweep_config(args, all_config_data, runner_data):
                         Fields.ADDITIONAL_SETTINGS.value: decode_config.get(Fields.ADDITIONAL_SETTINGS.value, []),
                     },
                     Fields.CONC.value: [lowest_conc],
-                    Fields.MAX_MODEL_LEN.value: 2048,
+                    Fields.MAX_MODEL_LEN.value: int((isl + osl) * 1.5),
                     Fields.EXP_NAME.value: f"{model_code}_test",
                     Fields.DISAGG.value: disagg,
                 }
@@ -359,14 +361,14 @@ def generate_runner_model_sweep_config(args, all_config_data, runner_data):
                     Fields.PRECISION.value: val[Fields.PRECISION.value],
                     Fields.FRAMEWORK.value: val[Fields.FRAMEWORK.value],
                     Fields.RUNNER.value: node,
-                    Fields.ISL.value: 1024,
-                    Fields.OSL.value: 1024,
+                    Fields.ISL.value: isl,
+                    Fields.OSL.value: osl,
                     Fields.TP.value: highest_tp,
                     Fields.EP.value: ep if ep is not None else 1,
                     Fields.DP_ATTN.value: dp_attn if dp_attn is not None else False,
                     Fields.SPEC_DECODING.value: spec_decoding,
                     Fields.CONC.value: lowest_conc,
-                    Fields.MAX_MODEL_LEN.value: 2048,
+                    Fields.MAX_MODEL_LEN.value: int((isl + osl) * 1.5),
                     Fields.EXP_NAME.value: f"{model_code}_test",
                     Fields.DISAGG.value: disagg,
                 }
@@ -445,7 +447,7 @@ def generate_test_config_sweep(args, all_config_data):
                         Fields.PREFILL.value: prefill,
                         Fields.DECODE.value: decode,
                         Fields.CONC.value: conc_values,
-                        Fields.MAX_MODEL_LEN.value: isl + osl + 200,
+                        Fields.MAX_MODEL_LEN.value: int((isl + osl) * 1.5),
                         Fields.EXP_NAME.value: f"{model_code}_{seq_len_str}",
                         Fields.DISAGG.value: disagg,
                     }
@@ -485,7 +487,7 @@ def generate_test_config_sweep(args, all_config_data):
                             Fields.OSL.value: osl,
                             Fields.TP.value: tp,
                             Fields.CONC.value: conc,
-                            Fields.MAX_MODEL_LEN.value: isl + osl + 200,
+                            Fields.MAX_MODEL_LEN.value: int((isl + osl) * 1.5),
                             Fields.EP.value: ep if ep is not None else 1,
                             Fields.DP_ATTN.value: dp_attn if dp_attn is not None else False,
                             Fields.SPEC_DECODING.value: spec_decoding,
