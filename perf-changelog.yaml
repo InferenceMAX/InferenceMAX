@@ -157,7 +157,6 @@
     - "Includes with and without speculative decoding"
   pr-link: https://github.com/InferenceMAX/InferenceMAX/pull/348
   
-  
 - config-keys:
     - dsr1-fp4-mi355x-sglang
   description:
