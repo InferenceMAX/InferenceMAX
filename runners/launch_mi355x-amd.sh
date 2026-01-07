@@ -2,6 +2,7 @@
 
 export HF_HUB_CACHE_MOUNT="/hf-hub-cache"
 export PORT_OFFSET=${USER: -1}
+FRAMEWORK_SUFFIX=$([[ "$FRAMEWORK" == "atom" ]] && printf '_atom' || printf '')
 
 PARTITION="compute"
 SQUASH_FILE="/squash/$(echo "$IMAGE" | sed 's/[\/:@#]/_/g').sqsh"
@@ -31,7 +32,7 @@ srun --jobid=$JOB_ID \
 --container-writable \
 --container-workdir=/workspace/ \
 --no-container-entrypoint --export=ALL \
-bash benchmarks/${EXP_NAME%%_*}_${PRECISION}_mi355x_slurm.sh
+bash benchmarks/${EXP_NAME%%_*}_${PRECISION}_mi355x${FRAMEWORK_SUFFIX}_slurm.sh
 
 scancel $JOB_ID
 
