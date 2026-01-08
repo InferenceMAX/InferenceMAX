@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-# === Required Env Vars === 
+# === Required Env Vars ===
 # MODEL
-# PORT
 # TP
 # EP_SIZE
 # DP_ATTENTION
@@ -14,7 +13,14 @@
 # NUM_PROMPTS
 # RESULT_FILENAME
 
+if [[ -n "$SLURM_JOB_ID" ]]; then
+  echo "JOB $SLURM_JOB_ID running on $SLURMD_NODENAME"
+fi
+
+hf download "$MODEL"
+
 SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
+PORT=${PORT:-8888}
 
 # GPTOSS TRTLLM Deployment Guide:
 # https://github.com/NVIDIA/TensorRT-LLM/blob/main/docs/source/deployment-guide/quick-start-recipe-for-gpt-oss-on-trtllm.md
@@ -43,6 +49,16 @@ moe_config:
 EOF
 
 if [[ "$DP_ATTENTION" == "true" ]]; then
+    # DISABLE All2All for MoE TP
+    if [[ "$EP_SIZE" -eq 1 ]]; then
+        # DTP Alltoall Environment variables for EP_SIZE == 1
+        export TRTLLM_FORCE_ALLTOALL_METHOD="NotEnabled"
+    elif [[ "$EP_SIZE" -gt 1 ]]; then
+        # DEP
+        export TRTLLM_MOE_ALLTOALL_BACKEND="mnnvlthroughput"
+        export TRTLLM_FORCE_ALLTOALL_METHOD="MNNVL"
+        export TRTLLM_MOE_A2A_WORKSPACE_MB="2048"
+    fi
     cat << EOF >> $EXTRA_CONFIG_FILE
 attention_dp_config:
     enable_balance: true

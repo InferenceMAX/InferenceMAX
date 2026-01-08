@@ -9,34 +9,35 @@
 # MAX_MODEL_LEN
 # RANDOM_RANGE_RATIO
 # RESULT_FILENAME
-# PORT_OFFSET
 # DP_ATTENTION
 # EP_SIZE
 
-echo "JOB $SLURM_JOB_ID running on $SLURMD_NODENAME"
+if [[ -n "$SLURM_JOB_ID" ]]; then
+  echo "JOB $SLURM_JOB_ID running on $SLURMD_NODENAME"
+fi
 
 echo "TP: $TP, CONC: $CONC, ISL: $ISL, OSL: $OSL, EP_SIZE: $EP_SIZE, DP_ATTENTION: $DP_ATTENTION"
 
-hf download $MODEL
+hf download "$MODEL"
 
 # ========= Determine DP_ATTENTION, EP_SIZE and MOE_BACKEND based on ISL, OSL, CONC =========
-MOE_BACKEND="DEEPGEMM"
+MOE_BACKEND="CUTLASS"
 
 echo "MOE_BACKEND set to '$MOE_BACKEND'"
 
 SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
-PORT=$(( 8888 + $PORT_OFFSET ))
+PORT=${PORT:-8888}
 EXTRA_CONFIG_FILE="dsr1-fp8.yml"
 
 cat > $EXTRA_CONFIG_FILE << EOF
 cuda_graph_config:
     enable_padding: true
-    max_batch_size: 256
+    max_batch_size: 128
 enable_attention_dp: $DP_ATTENTION
 print_iter_log: true
 kv_cache_config:
     dtype: fp8
-    free_gpu_memory_fraction: 0.8
+    free_gpu_memory_fraction: 0.75
     enable_block_reuse: false 
 stream_interval: 10
 moe_config:
@@ -57,7 +58,7 @@ set -x
 MAX_NUM_TOKENS=$(( ($CONC+$ISL+64+63)/64*64 ))
 
 # Launch TRT-LLM server
-mpirun -n 1 --oversubscribe --allow-run-as-root \
+PYTHONNOUSERSITE=1 mpirun -n 1 --oversubscribe --allow-run-as-root \
     trtllm-serve $MODEL --port=$PORT \
     --trust_remote_code \
     --backend=pytorch \
@@ -66,7 +67,7 @@ mpirun -n 1 --oversubscribe --allow-run-as-root \
     --tp_size=$TP --ep_size=$EP_SIZE \
     --extra_llm_api_options=$EXTRA_CONFIG_FILE \
     > $SERVER_LOG 2>&1 &
-
+    
 SERVER_PID=$!
 
 # Source benchmark utilities

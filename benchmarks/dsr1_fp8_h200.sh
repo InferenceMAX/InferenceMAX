@@ -8,14 +8,16 @@
 # OSL
 # RANDOM_RANGE_RATIO
 # RESULT_FILENAME
-# PORT_OFFSET
 
-echo "JOB \$SLURM_JOB_ID running on \$SLURMD_NODENAME"
+if [[ -n "$SLURM_JOB_ID" ]]; then
+  echo "JOB $SLURM_JOB_ID running on $SLURMD_NODENAME"
+fi
 
 pip3 install --user sentencepiece
-hf download $MODEL
-PORT=$(( 8888 + $PORT_OFFSET ))
+
+hf download "$MODEL"
 SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
+PORT=${PORT:-8888}
 
 export TORCH_CUDA_ARCH_LIST="9.0"
 

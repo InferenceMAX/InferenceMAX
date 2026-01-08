@@ -9,15 +9,16 @@
 # MAX_MODEL_LEN
 # RANDOM_RANGE_RATIO
 # RESULT_FILENAME
-# PORT_OFFSET
 # DP_ATTENTION
 # EP_SIZE
 
-echo "JOB $SLURM_JOB_ID running on $SLURMD_NODENAME"
+if [[ -n "$SLURM_JOB_ID" ]]; then
+  echo "JOB $SLURM_JOB_ID running on $SLURMD_NODENAME"
+fi
 
 echo "TP: $TP, CONC: $CONC, ISL: $ISL, OSL: $OSL, EP_SIZE: $EP_SIZE, DP_ATTENTION: $DP_ATTENTION"
 
-hf download $MODEL
+hf download "$MODEL"
 
 # ========= Determine DP_ATTENTION, EP_SIZE and MOE_BACKEND based on ISL, OSL, CONC =========
 MOE_BACKEND="TRTLLM"
@@ -55,7 +56,7 @@ fi
 echo "MOE_BACKEND set to '$MOE_BACKEND'"
 
 SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
-PORT=$(( 8888 + $PORT_OFFSET ))
+PORT=${PORT:-8888}
 EXTRA_CONFIG_FILE="dsr1-fp4.yml"
 
 cat > $EXTRA_CONFIG_FILE << EOF
