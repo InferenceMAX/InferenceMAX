@@ -373,7 +373,7 @@ META
             if [ "$base" != "meta_env.json" ]; then
                 mv -f "$jf" ./ || true
             fi
-        done < <(find "${out_dir}" -type f -name "*.json" -print0 2>/dev/null)
+        done < <(find "${out_dir}" -type f -name "*.json*" -print0 2>/dev/null)
     fi
 
     # Best-effort cleanup of the temp directory
