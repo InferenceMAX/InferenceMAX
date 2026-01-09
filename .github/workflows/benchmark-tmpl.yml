@@ -194,6 +194,7 @@ jobs:
           path: |
             meta_env.json
             results*.json
+            sample*.json*
           if-no-files-found: ignore
 
       - name: Cleanup eval outputs (post-upload)
