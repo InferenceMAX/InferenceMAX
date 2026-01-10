@@ -12,7 +12,6 @@
 
 echo "JOB $SLURM_JOB_ID running on $SLURMD_NODENAME"
 
-set -x
 hf download $MODEL
 pip install datasets pandas
 
@@ -35,14 +34,18 @@ max-model-len: $CALCULATED_MAX_MODEL_LEN
 EOF
 
 SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
-PORT=$(( 8888 + $PORT_OFFSET ))
-
 export TORCH_CUDA_ARCH_LIST="9.0"
+PORT=$(( 8888 + $PORT_OFFSET ))
+MODEL_NAME=${MODEL##*/}
 export VLLM_MXFP4_USE_MARLIN=1
 
-PYTHONNOUSERSITE=1 vllm serve $MODEL --host 0.0.0.0 --port $PORT --config config.yaml \
- --gpu-memory-utilization 0.9 --tensor-parallel-size $TP --max-num-seqs $CONC  \
- > $SERVER_LOG 2>&1 &
+PYTHONNOUSERSITE=1 vllm serve $MODEL --host 0.0.0.0 --port $PORT \
+ --config config.yaml \
+ --gpu-memory-utilization 0.9 \
+ --tensor-parallel-size $TP \
+ --max-num-seqs $CONC  \
+ --disable-log-requests \
+ --served-model-name $MODEL_NAME > $SERVER_LOG 2>&1 &
 
 SERVER_PID=$!
 
@@ -53,7 +56,8 @@ source "$(dirname "$0")/benchmark_lib.sh"
 wait_for_server_ready --port "$PORT" --server-log "$SERVER_LOG" --server-pid "$SERVER_PID"
 
 run_benchmark_serving \
-    --model "$MODEL" \
+    --model "$MODEL_NAME" \
+    --tokenizer "$MODEL" \
     --port "$PORT" \
     --backend vllm \
     --input-len "$ISL" \
@@ -63,3 +67,10 @@ run_benchmark_serving \
     --max-concurrency "$CONC" \
     --result-filename "$RESULT_FILENAME" \
     --result-dir /workspace/
+
+# After throughput, run evaluation only if RUN_EVAL is true
+if [ "${RUN_EVAL}" = "true" ]; then
+    run_eval --framework lm-eval --port "$PORT" --concurrent-requests $(( $CONC * 2 ))
+    append_lm_eval_summary
+fi
+set +x

@@ -115,6 +115,7 @@ def main():
                     *MASTER_CONFIGS,
                     "--runner-config",
                     RUNNER_CONFIG,
+                    "--run-evals"
                 ],
                 capture_output=True,
                 text=True,
