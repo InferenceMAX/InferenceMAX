@@ -25,15 +25,18 @@ EOF
 
 SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
 export TORCH_CUDA_ARCH_LIST="9.0"
+PORT=${PORT:-8888}
+MODEL_NAME=${MODEL##*/}
 export VLLM_MXFP4_USE_MARLIN=1
 
 set -x
 PYTHONNOUSERSITE=1 vllm serve $MODEL --host=0.0.0.0 --port=$PORT \
---config config.yaml \
---gpu-memory-utilization=0.9 \
---tensor-parallel-size=$TP \
---max-num-seqs=$CONC  \
- > $SERVER_LOG 2>&1 &
+  --config config.yaml \
+  --gpu-memory-utilization=0.9 \
+  --tensor-parallel-size=$TP \
+  --max-num-seqs=$CONC  \
+  --disable-log-requests \
+  --served-model-name $MODEL_NAME > $SERVER_LOG 2>&1 &
 
 SERVER_PID=$!
 
@@ -43,7 +46,8 @@ wait_for_server_ready --port "$PORT" --server-log "$SERVER_LOG" --server-pid "$S
 pip install -q datasets pandas
 
 run_benchmark_serving \
-    --model "$MODEL" \
+    --model "$MODEL_NAME" \
+    --tokenizer "$MODEL" \
     --port "$PORT" \
     --backend vllm \
     --input-len "$ISL" \
@@ -53,3 +57,10 @@ run_benchmark_serving \
     --max-concurrency "$CONC" \
     --result-filename "$RESULT_FILENAME" \
     --result-dir /workspace/
+
+# After throughput, run evaluation only if RUN_EVAL is true
+if [ "${RUN_EVAL}" = "true" ]; then
+    run_eval --framework lm-eval --port "$PORT" --concurrent-requests $(( $CONC * 2 ))
+    append_lm_eval_summary
+fi
+set +x

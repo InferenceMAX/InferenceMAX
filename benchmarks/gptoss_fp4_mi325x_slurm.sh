@@ -33,6 +33,7 @@ fi
 export VLLM_USE_AITER_UNIFIED_ATTENTION=1
 export VLLM_ROCM_USE_AITER_MHA=0
 export VLLM_ROCM_USE_AITER_TRITON_BF16_GEMM=0
+MODEL_NAME=${MODEL##*/}
 
 set -x
 vllm serve $MODEL --port $PORT \
@@ -44,8 +45,8 @@ vllm serve $MODEL --port $PORT \
 --block-size=64 \
 --no-enable-prefix-caching \
 --disable-log-requests \
---async-scheduling \
-> $SERVER_LOG 2>&1 &
+--served-model-name $MODEL_NAME \
+--async-scheduling > $SERVER_LOG 2>&1 &
 
 SERVER_PID=$!
 
@@ -53,7 +54,8 @@ SERVER_PID=$!
 wait_for_server_ready --port "$PORT" --server-log "$SERVER_LOG" --server-pid "$SERVER_PID"
 
 run_benchmark_serving \
-    --model "$MODEL" \
+    --model "$MODEL_NAME" \
+    --tokenizer "$MODEL" \
     --port "$PORT" \
     --backend vllm \
     --input-len "$ISL" \
@@ -63,3 +65,10 @@ run_benchmark_serving \
     --max-concurrency "$CONC" \
     --result-filename "$RESULT_FILENAME" \
     --result-dir /workspace/
+
+# After throughput, run evaluation only if RUN_EVAL is true
+if [ "${RUN_EVAL}" = "true" ]; then
+    run_eval --framework lm-eval --port "$PORT" --concurrent-requests $(( $CONC * 2 ))
+    append_lm_eval_summary
+fi
+set +x
