@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
 
-# Source benchmark utilities early
-source "$(dirname "$0")/benchmark_lib.sh"
+# === Required Env Vars ===
+# MODEL
+# TP
+# CONC
+# ISL
+# OSL
+# RANDOM_RANGE_RATIO
+# RESULT_FILENAME
+# EP_SIZE
+# NUM_PROMPTS
 
-check_env_vars \
-    MODEL \
-    PORT \
-    TP \
-    CONC \
-    ISL \
-    OSL \
-    RANDOM_RANGE_RATIO \
-    RESULT_FILENAME \
-    EP_SIZE \
-    NUM_PROMPTS
+if [[ -n "$SLURM_JOB_ID" ]]; then
+  echo "JOB $SLURM_JOB_ID running on $SLURMD_NODENAME"
+fi
+
+hf download "$MODEL"
 
 nvidia-smi
 
@@ -21,7 +23,10 @@ nvidia-smi
 # happens 1% of the time. ref: https://github.com/flashinfer-ai/flashinfer/pull/1779
 sed -i '102,108d' /usr/local/lib/python3.12/dist-packages/flashinfer/jit/cubin_loader.py
 
+export SGL_ENABLE_JIT_DEEPGEMM=false
+export SGLANG_ENABLE_FLASHINFER_GEMM=true
 SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
+PORT=${PORT:-8888}
 
 # Default: recv every ~10 requests; if CONC ≥ 16, relax to ~30 requests between scheduler recv polls.
 if [[ $CONC -ge 16 ]]; then
@@ -34,14 +39,17 @@ echo "SCHEDULER_RECV_INTERVAL: $SCHEDULER_RECV_INTERVAL, CONC: $CONC, ISL: $ISL,
 ps aux
 
 set -x
-PYTHONNOUSERSITE=1 python3 -m sglang.launch_server --model-path $MODEL --host 0.0.0.0 --port $PORT --trust-remote-code \
+PYTHONNOUSERSITE=1 python3 -m sglang.launch_server --model-path=$MODEL --host=0.0.0.0 --port=$PORT \
 --tensor-parallel-size=$TP --data-parallel-size=1 \
---cuda-graph-max-bs 256 --max-running-requests 256 --mem-fraction-static 0.85 --kv-cache-dtype fp8_e4m3 \
---chunked-prefill-size 16384 \
---ep-size $EP_SIZE --quantization modelopt_fp4 --enable-flashinfer-allreduce-fusion --scheduler-recv-interval $SCHEDULER_RECV_INTERVAL \
---enable-symm-mem --disable-radix-cache --attention-backend trtllm_mla --moe-runner-backend flashinfer_trtllm --stream-interval 10 > $SERVER_LOG 2>&1 &
+--cuda-graph-max-bs 128 --max-running-requests 128 \
+--mem-fraction-static 0.82 --kv-cache-dtype fp8_e4m3 --chunked-prefill-size 32768 --max-prefill-tokens 32768 \
+--enable-flashinfer-allreduce-fusion --scheduler-recv-interval $SCHEDULER_RECV_INTERVAL --disable-radix-cache \
+--attention-backend trtllm_mla --stream-interval 30 --ep-size $EP_SIZE --moe-runner-backend flashinfer_trtllm --quantization fp8 > $SERVER_LOG 2>&1 &
 
 SERVER_PID=$!
+
+# Source benchmark utilities
+source "$(dirname "$0")/benchmark_lib.sh"
 
 # Wait for server to be ready
 wait_for_server_ready --port "$PORT" --server-log "$SERVER_LOG" --server-pid "$SERVER_PID"

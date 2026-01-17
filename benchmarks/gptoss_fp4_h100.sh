@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 
-# Source benchmark utilities early
-source "$(dirname "$0")/benchmark_lib.sh"
+# === Required Env Vars ===
+# MODEL
+# TP
+# CONC
+# ISL
+# OSL
+# RANDOM_RANGE_RATIO
+# RESULT_FILENAME
 
-check_env_vars \
-    MODEL \
-    PORT \
-    TP \
-    CONC \
-    ISL \
-    OSL \
-    RANDOM_RANGE_RATIO \
-    RESULT_FILENAME
+if [[ -n "$SLURM_JOB_ID" ]]; then
+  echo "JOB $SLURM_JOB_ID running on $SLURMD_NODENAME"
+fi
 
-echo "JOB $SLURM_JOB_ID running on $SLURMD_NODENAME"
+hf download "$MODEL"
 
 cat > config.yaml << EOF
 async-scheduling: true
@@ -23,19 +23,23 @@ max-num-batched-tokens: 8192
 max-model-len: 10240
 EOF
 
-SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
-export TORCH_CUDA_ARCH_LIST="9.0"
+export PYTHONNOUSERSITE=1
 export VLLM_MXFP4_USE_MARLIN=1
+SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
+PORT=${PORT:-8888}
 
 set -x
-PYTHONNOUSERSITE=1 vllm serve $MODEL --host=0.0.0.0 --port=$PORT \
+vllm serve $MODEL --host=0.0.0.0 --port=$PORT \
 --config config.yaml \
 --gpu-memory-utilization=0.9 \
 --tensor-parallel-size=$TP \
 --max-num-seqs=$CONC  \
- > $SERVER_LOG 2>&1 &
+> $SERVER_LOG 2>&1 &
 
 SERVER_PID=$!
+
+# Source benchmark utilities
+source "$(dirname "$0")/benchmark_lib.sh"
 
 # Wait for server to be ready
 wait_for_server_ready --port "$PORT" --server-log "$SERVER_LOG" --server-pid "$SERVER_PID"

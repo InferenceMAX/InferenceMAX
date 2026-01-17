@@ -1,25 +1,30 @@
 #!/usr/bin/env bash
 
-# Source benchmark utilities early
-source "$(dirname "$0")/benchmark_lib.sh"
+# === Required Env Vars ===
+# MODEL
+# TP
+# CONC
+# ISL
+# OSL
+# RANDOM_RANGE_RATIO
+# RESULT_FILENAME
+# EP_SIZE
+# NUM_PROMPTS
 
-check_env_vars \
-    MODEL \
-    PORT_OFFSET \
-    TP \
-    CONC \
-    ISL \
-    OSL \
-    RANDOM_RANGE_RATIO \
-    RESULT_FILENAME \
-    EP_SIZE
+if [[ -n "$SLURM_JOB_ID" ]]; then
+  echo "JOB $SLURM_JOB_ID running on $SLURMD_NODENAME"
+fi
 
-echo "JOB $SLURM_JOB_ID running on $SLURMD_NODENAME"
+hf download "$MODEL"
 
 nvidia-smi
 
+# To improve CI stability, we patch this helper function to prevent a race condition that
+# happens 1% of the time. ref: https://github.com/flashinfer-ai/flashinfer/pull/1779
+sed -i '102,108d' /usr/local/lib/python3.12/dist-packages/flashinfer/jit/cubin_loader.py
+
 SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
-PORT=$(( 8888 + $PORT_OFFSET ))
+PORT=${PORT:-8888}
 
 # Default: recv every ~10 requests; if CONC ≥ 16, relax to ~30 requests between scheduler recv polls.
 if [[ $CONC -ge 16 ]]; then
@@ -28,6 +33,8 @@ else
   SCHEDULER_RECV_INTERVAL=10
 fi
 echo "SCHEDULER_RECV_INTERVAL: $SCHEDULER_RECV_INTERVAL, CONC: $CONC, ISL: $ISL, OSL: $OSL"
+
+ps aux
 
 set -x
 PYTHONNOUSERSITE=1 python3 -m sglang.launch_server --model-path $MODEL --host 0.0.0.0 --port $PORT --trust-remote-code \
@@ -38,6 +45,9 @@ PYTHONNOUSERSITE=1 python3 -m sglang.launch_server --model-path $MODEL --host 0.
 --enable-symm-mem --disable-radix-cache --attention-backend trtllm_mla --moe-runner-backend flashinfer_trtllm --stream-interval 10 > $SERVER_LOG 2>&1 &
 
 SERVER_PID=$!
+
+# Source benchmark utilities
+source "$(dirname "$0")/benchmark_lib.sh"
 
 # Wait for server to be ready
 wait_for_server_ready --port "$PORT" --server-log "$SERVER_LOG" --server-pid "$SERVER_PID"
@@ -51,7 +61,8 @@ run_benchmark_serving \
     --input-len "$ISL" \
     --output-len "$OSL" \
     --random-range-ratio "$RANDOM_RANGE_RATIO" \
-    --num-prompts $(( $CONC * 10 )) \
+    --num-prompts "$NUM_PROMPTS" \
     --max-concurrency "$CONC" \
     --result-filename "$RESULT_FILENAME" \
     --result-dir /workspace/
+

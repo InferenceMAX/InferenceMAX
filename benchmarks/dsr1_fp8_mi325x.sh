@@ -1,26 +1,32 @@
 #!/usr/bin/env bash
 
-# Source benchmark utilities early
-source "$(dirname "$0")/benchmark_lib.sh"
+# === Required Env Vars ===
+# MODEL
+# TP
+# CONC
+# ISL
+# OSL
+# RANDOM_RANGE_RATIO
+# RESULT_FILENAME
 
-check_env_vars \
-    MODEL \
-    PORT \
-    TP \
-    CONC \
-    ISL \
-    OSL \
-    RANDOM_RANGE_RATIO \
-    RESULT_FILENAME
+if [[ -n "$SLURM_JOB_ID" ]]; then
+  echo "JOB $SLURM_JOB_ID running on $SLURMD_NODENAME"
+fi
+
+hf download "$MODEL"
 
 # Reference
 # https://rocm.docs.amd.com/en/docs-7.0-docker/benchmark-docker/inference-sglang-deepseek-r1-fp8.html
 
 export SGLANG_USE_AITER=1
+export RCCL_MSCCL_ENABLE=0
+export ROCM_QUICK_REDUCE_QUANTIZATION=INT4
 
 SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
+PORT=${PORT:-8888}
 
 python3 -m sglang.launch_server \
+    --attention-backend aiter \
     --model-path $MODEL \
     --host=0.0.0.0 \
     --port $PORT \
@@ -30,9 +36,13 @@ python3 -m sglang.launch_server \
     --mem-fraction-static 0.8 --disable-radix-cache \
     --num-continuous-decode-steps 4 \
     --max-prefill-tokens 196608 \
-    --cuda-graph-max-bs 128 > $SERVER_LOG 2>&1 &
+    --cuda-graph-max-bs 128 \
+    --enable-torch-compile > $SERVER_LOG 2>&1 &
 
 SERVER_PID=$!
+
+# Source benchmark utilities
+source "$(dirname "$0")/benchmark_lib.sh"
 
 # Wait for server to be ready
 wait_for_server_ready --port "$PORT" --server-log "$SERVER_LOG" --server-pid "$SERVER_PID"
