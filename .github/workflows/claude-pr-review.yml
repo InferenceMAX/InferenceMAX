@@ -67,6 +67,13 @@ jobs:
             4. **Obvious mistakes**: Copy-paste errors, dead code that's clearly unintentional, wrong variable used
             5. **Resource leaks**: Unclosed connections, missing cleanup, memory leaks
 
+            ## Master Config and Perf Changelog Validation:
+            IMPORTANT: Check if either `.github/configs/amd-master.yaml` or `.github/configs/nvidia-master.yaml` was modified in this PR.
+            If either master config file was modified, verify that `perf-changelog.yaml` was also modified in the same PR.
+            If a master config file was changed but `perf-changelog.yaml` was NOT updated:
+            - Flag this as a 🔴 **BLOCKING** issue
+            - Comment: "Master config file(s) were modified but `perf-changelog.yaml` was not updated. When changing `.github/configs/amd-master.yaml` or `.github/configs/nvidia-master.yaml`, you must also update `perf-changelog.yaml` to document the performance-related changes."
+
             ## DO NOT comment on:
             - Style preferences or formatting (we have linters for that)
             - "Consider doing X" suggestions unless the current code is actually broken
