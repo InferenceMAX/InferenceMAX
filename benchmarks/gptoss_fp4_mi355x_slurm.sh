@@ -12,7 +12,6 @@ check_env_vars \
     MAX_MODEL_LEN \
     RANDOM_RANGE_RATIO \
     RESULT_FILENAME \
-    NUM_PROMPTS \
     PORT_OFFSET
 
 SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
@@ -29,6 +28,8 @@ export VLLM_USE_AITER_UNIFIED_ATTENTION=1
 export VLLM_ROCM_USE_AITER_MHA=0
 export VLLM_ROCM_USE_AITER_FUSED_MOE_A16W4=1
 
+#
+## Start up vllm server
 set -x
 vllm serve $MODEL --port $PORT \
 --tensor-parallel-size=$TP \
@@ -53,7 +54,14 @@ run_benchmark_serving \
     --input-len "$ISL" \
     --output-len "$OSL" \
     --random-range-ratio "$RANDOM_RANGE_RATIO" \
-    --num-prompts "$NUM_PROMPTS" \
+    --num-prompts "$((CONC * 10))" \
     --max-concurrency "$CONC" \
     --result-filename "$RESULT_FILENAME" \
     --result-dir /workspace/
+
+# After throughput, run evaluation only if RUN_EVAL is true
+if [ "${RUN_EVAL}" = "true" ]; then
+    run_eval --framework lm-eval --port "$PORT" --concurrent-requests $CONC
+    append_lm_eval_summary
+fi
+set +x

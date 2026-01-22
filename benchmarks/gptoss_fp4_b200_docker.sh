@@ -12,8 +12,7 @@ check_env_vars \
     OSL \
     MAX_MODEL_LEN \
     RANDOM_RANGE_RATIO \
-    RESULT_FILENAME \
-    NUM_PROMPTS
+    RESULT_FILENAME
 
 nvidia-smi
 
@@ -48,9 +47,12 @@ export VLLM_USE_FLASHINFER_MOE_MXFP4_MXFP8=1
 SERVER_LOG=$(mktemp /tmp/server-XXXXXX.log)
 
 set -x
-vllm serve $MODEL --host 0.0.0.0 --port $PORT --config config.yaml \
---gpu-memory-utilization 0.9 --tensor-parallel-size $TP --max-num-seqs 512 \
-> $SERVER_LOG 2>&1 &
+vllm serve $MODEL --host 0.0.0.0 --port $PORT \
+--config config.yaml \
+--gpu-memory-utilization 0.9 \
+--tensor-parallel-size $TP \
+--max-num-seqs 512 \
+--disable-log-requests > $SERVER_LOG 2>&1 &
 
 SERVER_PID=$!
 
@@ -66,7 +68,14 @@ run_benchmark_serving \
     --input-len "$ISL" \
     --output-len "$OSL" \
     --random-range-ratio "$RANDOM_RANGE_RATIO" \
-    --num-prompts "$NUM_PROMPTS" \
+    --num-prompts "$((CONC * 10))" \
     --max-concurrency "$CONC" \
     --result-filename "$RESULT_FILENAME" \
     --result-dir /workspace/
+
+# After throughput, run evaluation only if RUN_EVAL is true
+if [ "${RUN_EVAL}" = "true" ]; then
+    run_eval --framework lm-eval --port "$PORT" --concurrent-requests $CONC
+    append_lm_eval_summary
+fi
+set +x

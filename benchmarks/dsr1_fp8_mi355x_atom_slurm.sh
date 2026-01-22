@@ -9,7 +9,6 @@
 # OSL
 # RANDOM_RANGE_RATIO
 # RESULT_FILENAME
-# NUM_PROMPTS
 # PORT_OFFSET
 # EP_SIZE
 # DP_ATTENTION
@@ -60,8 +59,14 @@ run_benchmark_serving \
     --input-len "$ISL" \
     --output-len "$OSL" \
     --random-range-ratio "$RANDOM_RANGE_RATIO" \
-    --num-prompts "$NUM_PROMPTS" \
+    --num-prompts "$((CONC * 10))" \
     --max-concurrency "$CONC" \
     --result-filename "$RESULT_FILENAME" \
     --result-dir /workspace/
 
+# After throughput, run evaluation only if RUN_EVAL is true
+if [ "${RUN_EVAL}" = "true" ]; then
+    run_eval --framework lm-eval --port "$PORT" --concurrent-requests $CONC
+    append_lm_eval_summary
+fi
+set +x
