@@ -21,6 +21,7 @@ hf download "$MODEL"
 # https://rocm.docs.amd.com/en/docs-7.0-docker/benchmark-docker/inference-sglang-deepseek-r1-fp8.html
 
 export SGLANG_USE_AITER=1
+export SGLANG_AITER_MLA_PERSIST=1
 export RCCL_MSCCL_ENABLE=0
 export ROCM_QUICK_REDUCE_QUANTIZATION=INT4
 
@@ -34,10 +35,11 @@ python3 -m sglang.launch_server \
     --port $PORT \
     --tensor-parallel-size $TP \
     --trust-remote-code \
-    --chunked-prefill-size 196608 \
+    --chunked-prefill-size 131072 \
     --mem-fraction-static 0.8 --disable-radix-cache \
     --num-continuous-decode-steps 4 \
-    --max-prefill-tokens 196608 \
+    --max-prefill-tokens 131072 \
+    --kv-cache-dtype fp8_e4m3 \
     --enable-torch-compile \
     --cuda-graph-max-bs 128 > $SERVER_LOG 2>&1 &
 
