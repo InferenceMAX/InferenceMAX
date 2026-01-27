@@ -31,7 +31,7 @@ echo "Configs available at: $TRTLLM_REPO_DIR/"
 export SLURM_PARTITION="main"
 export SLURM_ACCOUNT="sa-shared"
 
-SQUASH_FILE="/squash/$(echo "$IMAGE" | sed 's/[\/:@#]/_/g').sqsh"
+SQUASH_FILE="/data/containers/$(echo "$IMAGE" | sed 's/[\/:@#]/_/g').sqsh"
 
 if [[ $MODEL_PREFIX == "dsr1" ]]; then
     export MODEL_PATH="/models/DeepSeek-R1-0528"
