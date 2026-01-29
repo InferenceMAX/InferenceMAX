@@ -22,7 +22,7 @@ dsr1-fp4-mi355x-sglang:
     - { tp: 8, conc-start: 4, conc-end: 64 }
 
 dsr1-fp4-mi355x-atom:
-  image: rocm/atom:rocm7.1.1-ubuntu24.04-pytorch2.9-atom0.1.1-MI350x
+  image: rocm/atom:gfx950_20260127
   model: amd/DeepSeek-R1-0528-MXFP4-Preview
   model-prefix: dsr1
   runner: mi355x
