@@ -250,6 +250,29 @@ dsr1-fp8-mi355x-atom:
     search-space:
     - { tp: 8, conc-start: 4, conc-end: 128 }
 
+dsr1-fp8-mi355x-atom-mtp:
+  image: rocm/atom-dev:nightly_202602020423
+  model: deepseek-ai/DeepSeek-R1-0528
+  model-prefix: dsr1
+  runner: mi355x
+  precision: fp8
+  # WIP framwork (no customers yet)
+  framework: atom
+  multinode: false
+  seq-len-configs:
+  - isl: 1024
+    osl: 1024
+    search-space:
+    - { tp: 8, conc-start: 4, conc-end: 256, spec-decoding: mtp }
+  - isl: 1024
+    osl: 8192
+    search-space:
+    - { tp: 8, conc-start: 4, conc-end: 256, spec-decoding: mtp  }
+  - isl: 8192
+    osl: 1024
+    search-space:
+    - { tp: 8, conc-start: 4, conc-end: 256, spec-decoding: mtp  }
+
 dsr1-fp8-mi355x-sglang-disagg:
   image: rocm/sgl-dev:sglang-0.5.6.post1-rocm700-mi35x-mori-0113
   model: deepseek-ai/DeepSeek-R1-0528
